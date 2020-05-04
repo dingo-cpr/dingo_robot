@@ -1,0 +1,32 @@
+<launch>
+  <arg name="dingo_port" default="/dev/dingo" />
+
+  <include file="$(find dingo_description)/dingo_d/launch/description.launch" />
+
+  <node pkg="rosserial_python" type="message_info_service.py" name="rosserial_message_info" />
+
+  <node pkg="dingo_base" type="dingo_node" name="dingo_node" output="screen">
+    <param name="port" value="$(arg dingo_port)" />
+    <param name="wireless_interface" value="$(optenv DINGO_WIRELESS_INTERFACE wlp2s0)" />
+  </node>
+
+  <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter">
+    <rosparam>
+      gain: 0.1
+      zeta: 0.001
+      publish_tf: false
+      use_magnetic_field_msg: true
+    </rosparam>
+  </node>
+
+  <!-- Differential controller and basic localization -->
+  <include file="$(find dingo_control)/dingo_d/launch/control.launch" />
+
+  <!-- Teleoperation via joystick and rviz interactive markers -->
+  <include file="$(find dingo_control)/dingo_d/launch/teleop.launch" />
+
+  <!-- Diagnostic Aggregator for robot monitor usage -->
+  <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator">
+    <rosparam command="load" file="$(find dingo_base)/config/diagnostic_analyzers.yaml" />
+  </node>
+</launch>

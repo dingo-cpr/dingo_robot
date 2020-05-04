@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>dingo_bringup</name>
+  <version>0.0.0</version>
+  <description>Scripts for installing Dingo's robot software.</description>
+
+  <maintainer email="tbaltovski@clearpathrobotics.com">Tony Baltovski</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>dingo_base</exec_depend>
+  <exec_depend>lms1xx</exec_depend>
+  <exec_depend version_gte="0.1.1">robot_upstart</exec_depend>
+
+  <export>
+  </export>
+</package>
