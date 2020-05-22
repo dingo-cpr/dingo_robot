@@ -35,7 +35,6 @@
   <exec_depend>teleop_twist_joy</exec_depend>
   <exec_depend>tf</exec_depend>
   <exec_depend>topic_tools</exec_depend>
-  <exec_depend>socat</exec_depend>
 
   <export>
   </export>
