@@ -36,8 +36,7 @@ install(TARGETS dingo_node
 
 if (CATKIN_ENABLE_TESTING)
   find_package(roslaunch REQUIRED)
-  roslaunch_add_file_check(launch/base.dingo_d.launch)
-  roslaunch_add_file_check(launch/base.dingo_o.launch)
+  roslaunch_add_file_check(launch/base.launch)
 
   find_package(roslint REQUIRED)
   roslint_cpp()

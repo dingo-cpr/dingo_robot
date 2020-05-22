@@ -5,9 +5,7 @@ from catkin.find_in_workspaces import find_in_workspaces
 find_in_workspaces(project="dingo_bringup", path="can-udp-bridge.conf")
 
 main_job = robot_upstart.Job(workspace_setup=os.environ['ROBOT_SETUP'])
-# TODO: need some way to choose Dingo-D vs Dingo-O and call
-# the appropriate launch file; possibly set an environment variable?
-main_job.add(package="dingo_base", filename="launch/base.dingo_d.launch")
+main_job.add(package="dingo_base", filename="launch/base.launch")
 main_job.add(package="dingo_bringup", filename="launch/accessories.launch")
 main_job.install()
 
@@ -21,12 +19,7 @@ class DingoExtras(robot_upstart.providers.Generic):
             can_conf_contents = f.read()
         with open(find_in_workspaces(project="dingo_bringup", path="can-udp-bridge.sh")[0]) as f:
             can_sh_contents = f.read()
-        return { "/etc/connman/main.conf": {
-                "content": """[General]
-NetworkInterfaceBlacklist=eth,br,en
-PreferredTechnologies=wifi""",
-                "mode": 0o644
-            },
+        return {
             "/lib/systemd/system/can-udp-bridge.service": {
                 "content": can_conf_contents,
                 "mode": 0o644
