@@ -1,12 +1,10 @@
 <launch>
-  <arg name="dingo_port" default="/dev/dingo" />
-
   <include file="$(find dingo_description)/launch/description.launch" />
 
   <node pkg="rosserial_python" type="message_info_service.py" name="rosserial_message_info" />
 
   <node pkg="dingo_base" type="dingo_node" name="dingo_node" output="screen">
-    <param name="port" value="$(arg dingo_port)" />
+    <param name="dingo_omni" type="bool" value="$(optenv DINGO_OMNI 0)" />
     <param name="wireless_interface" value="$(optenv DINGO_WIRELESS_INTERFACE wlp2s0)" />
   </node>
 
@@ -15,7 +13,7 @@
       gain: 0.1
       zeta: 0.001
       publish_tf: false
-      use_magnetic_field_msg: true
+      use_magnetic_field_msg: false
     </rosparam>
   </node>
 

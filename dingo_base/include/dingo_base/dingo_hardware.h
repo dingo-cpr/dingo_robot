@@ -36,7 +36,6 @@
 #include <vector>
 
 #include "boost/thread.hpp"
-#include "boost/foreach.hpp"
 #include "boost/shared_ptr.hpp"
 #include "hardware_interface/joint_state_interface.h"
 #include "hardware_interface/joint_command_interface.h"
@@ -55,20 +54,14 @@ namespace dingo_base
 class DingoHardware : public hardware_interface::RobotHW
 {
 public:
-  enum class DingoType
-  {
-    DINGO_D = 0,  //< differential drive
-    DINGO_O       //< omnidirectional drive
-  };
 
   /** Initializes joints, callbacks, etc.
-   *  @param[in] type Dingo-D or Dingo-O
    *  @param[in] nh Handle used for ROS communication
    *  @param[in] pnh Handle used for Puma communication to set parameters
    *  @param[in] gateway Used for Puma motor driver communication
+   *  @param[in] boolean that determines if Dingo O is selected
    */
-  DingoHardware(DingoType type, ros::NodeHandle& nh, ros::NodeHandle& pnh,
-                    puma_motor_driver::Gateway& gateway);
+  DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh, puma_motor_driver::Gateway& gateway, bool& dingo_omni);
 
   /** Connects to the CAN bus. Keep trying to connect to the CAN bus until
    *  connected.
@@ -90,6 +83,11 @@ public:
    *  @return true if the robot is active (drivers configured); else false
    */
   bool isActive();
+
+  /** Determines if ALL drivers are active.
+   *  @return true all are active; else false
+   */
+  bool areAllDriversActive();
 
   /** Checks each driver to see if power has been reset and resets the
    *  driver if needed.
@@ -121,9 +119,6 @@ public:
   void canSend();
 
 private:
-  /** Indicates if this instance is Dingo-D or Dingo-O */
-  const DingoType dingo_type_;
-
   /** ROS communication handles (regular, puma) */
   ros::NodeHandle nh_, pnh_;
 
@@ -134,7 +129,7 @@ private:
   std::vector<puma_motor_driver::Driver> drivers_;
 
   /** Puma multi-node driver */
-  boost::shared_ptr<puma_motor_driver::MultiDriverNode> multi_driver_node_;
+  std::shared_ptr<puma_motor_driver::MultiDriverNode> multi_driver_node_;
 
   /** Indicates if the drivers are configured */
   bool active_;
