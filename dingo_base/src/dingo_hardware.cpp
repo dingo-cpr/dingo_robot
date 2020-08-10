@@ -48,8 +48,8 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
   gateway_(gateway),
   active_(false)
 {
-  pnh_.param<double>("gear_ratio", gear_ratio_, 34.97);  // TODO(tbaltovski): to update
-  pnh_.param<int>("encoder_cpr", encoder_cpr_, 1024);    // TODO(tbaltovski): to update
+  pnh_.param<double>("gear_ratio", gear_ratio_, 24);
+  pnh_.param<int>("encoder_cpr", encoder_cpr_, 10);
 
   // Set up the wheels: differs for Dingo-D vs Dingo-O
   ros::V_string joint_names;
@@ -58,8 +58,8 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
   if (!dingo_omni)
   {
     joint_names.assign( {"left_wheel", "right_wheel"} );  // NOLINT(whitespace/braces)
-    joint_can_ids.assign(2, 3);
-    joint_directions.assign(-1, 1);
+    joint_can_ids.assign({2, 3});
+    joint_directions.assign({-1, 1});
   }
   else
   {
@@ -83,7 +83,7 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
     driver.clearMsgCache();
     driver.setEncoderCPR(encoder_cpr_);
     driver.setGearRatio(gear_ratio_ * joint_directions[i]);
-    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, 0.1, 0.01, 0.0);  // TODO(tbaltovski): to check
+    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, 0.025, 0.001, 0.0);
     drivers_.push_back(driver);
   }
 
