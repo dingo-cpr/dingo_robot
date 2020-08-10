@@ -160,11 +160,11 @@ bool DingoHardware::isActive()
 
   if (active_)
   {
-    ROS_INFO("Dingo Hardware Active.");
+    ROS_INFO_TROTTLE(60, "Dingo Hardware Active.");
   }
   else
   {
-    ROS_WARN("Dingo Hardware Inactive.");
+    ROS_WARN_TROTTLE(60, "Dingo Hardware Inactive.");
   }
 
   return active_;
