@@ -59,7 +59,7 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
   {
     joint_names.assign( {"left_wheel", "right_wheel"} );  // NOLINT(whitespace/braces)
     joint_can_ids.assign({2, 3});
-    joint_directions.assign({-1, 1});
+    joint_directions.assign({1, -1});
   }
   else
   {
