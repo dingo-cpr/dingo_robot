@@ -106,6 +106,7 @@ class DingoLogger
     const std::regex regexp_;
     bool debug_;
     std::string name_;
+    std::string local_name_;
 };
 
 }  // namespace dingo_base

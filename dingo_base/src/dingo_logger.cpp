@@ -54,6 +54,7 @@ DingoLogger::DingoLogger(const std::string name, ros::NodeHandle& nh, const doub
   remote_port_(11413),
   regexp_("^\\[(.+)\\] (.+):(\\d+) (.+)$")
 {
+  local_name_ = name_ + "_logger";
   log_pub_ = nh_.advertise<rosgraph_msgs::Log>("/rosout", 100);
 }
 
@@ -76,27 +77,27 @@ void DingoLogger::connect()
   try
   {
     socket_.open(udp::v4());
-    std::cout << __PRETTY_FUNCTION__ << ": UDP socket opened" << std::endl;
+    ROS_INFO_STREAM(local_name_.c_str() << ": UDP socket opened");
   }
   catch (std::exception& e)
   {
-    std::cerr << __PRETTY_FUNCTION__ << ": Could not open UDP socket: " << e.what() << std::endl;
+    ROS_ERROR_STREAM(local_name_.c_str() << ": Could not open UDP socket: " << e.what());
   }
 
   local_endpoint_ = boost::asio::ip::udp::endpoint(
     boost::asio::ip::address::from_string(local_ip_), local_port_);
   remote_endpoint_ = boost::asio::ip::udp::endpoint(
     boost::asio::ip::address::from_string(remote_ip_), remote_port_);
-  std::cout << __PRETTY_FUNCTION__ << ": Trying to connect to " << local_ip_ << ":" << local_port_ << std::endl;
+  ROS_INFO_STREAM(local_name_.c_str() << " : Trying to connect to " << local_ip_ << ":" << local_port_);
 
   try
   {
     socket_.bind(local_endpoint_);
-    std::cout << __PRETTY_FUNCTION__ << ": Bound Socket" << std::endl;
+    ROS_INFO_STREAM(local_name_.c_str() << ": Bound Socket");
   }
   catch (std::exception& e)
   {
-    std::cerr << __PRETTY_FUNCTION__ << ": Could not bind UDP socket: " << e.what() << std::endl;
+    ROS_ERROR_STREAM(local_name_.c_str() << ": Could not bind UDP socket: " << e.what());
   }
 }
 
@@ -173,7 +174,7 @@ void DingoLogger::onUdpReceive(const boost::system::error_code& ec, std::size_t 
   }
   else
   {
-    std::cerr << __PRETTY_FUNCTION__ << ": Receive Error: "  << ec.message() << std::endl;
+    ROS_ERROR_STREAM(local_name_.c_str() << ": Receive Error: "  << ec.message());
   }
 }
 
