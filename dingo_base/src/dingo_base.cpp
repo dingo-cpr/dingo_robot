@@ -169,5 +169,7 @@ int main(int argc, char* argv[])
   // Foreground ROS spinner for ROS callbacks, including rosserial, diagnostics
   ros::spin();
 
+  logger_thread.join();
+
   return 0;
 }
