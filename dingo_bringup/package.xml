@@ -9,8 +9,12 @@
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>depth_image_proc</exec_depend>
+  <exec_depend>depthimage_to_laserscan</exec_depend>
   <exec_depend>dingo_base</exec_depend>
   <exec_depend>lms1xx</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+  <exec_depend>urg_node</exec_depend>
   <exec_depend version_gte="0.1.1">robot_upstart</exec_depend>
 
   <export>
