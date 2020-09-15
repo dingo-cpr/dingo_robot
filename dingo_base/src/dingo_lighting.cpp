@@ -93,9 +93,9 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_M)(Orange_M)(Orange_M)(Orange_M));
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_L)(Orange_L)(Orange_L)(Orange_L));
 
-  patterns_.driving.push_back(boost::assign::list_of(White_M)(White_M)(White_M)(White_M));
+  patterns_.driving.push_back(boost::assign::list_of(Red_M)(White_M)(White_M)(Red_M));
 
-  patterns_.idle.push_back(boost::assign::list_of(White_L)(White_L)(White_L)(White_L));
+  patterns_.idle.push_back(boost::assign::list_of(Red_L)(White_L)(White_L)(Red_L));
 }
 
 void DingoLighting::setRGB(dingo_msgs::RGB* rgb, uint32_t colour)

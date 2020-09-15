@@ -30,19 +30,19 @@
  * Please send comments, questions, or patches to code@clearpathrobotics.com
  */
 
-#include <string>
+#include <chrono>  // NOLINT(build/c++11)
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-#include <boost/chrono.hpp>
-#include <boost/foreach.hpp>
-#include <boost/assign/list_of.hpp>
+#include <string>
+#include <thread>  // NOLINT(build/c++11)
 
 #include "controller_manager/controller_manager.h"
 #include "dingo_base/dingo_diagnostic_updater.h"
 #include "dingo_base/dingo_hardware.h"
 #include "dingo_base/dingo_cooling.h"
 #include "dingo_base/dingo_lighting.h"
+#include "dingo_base/dingo_logger.h"
 #include "puma_motor_driver/diagnostic_updater.h"
 #include "ros/ros.h"
 #include "rosserial_server/udp_socket_session.h"
@@ -50,23 +50,21 @@
 using boost::asio::ip::udp;
 using boost::asio::ip::address;
 
-typedef boost::chrono::steady_clock time_source;
-
 /** This is the main thread for monitoring and updating the robot.
  *  Assumes a separate thread is used for this function as it never returns.
  *  @param[in] rate Controls the rate at which each loop iteration is run
  *  @param[in] robot Handle to the hardware for the robot
  *  @param[in] cm Handle to the controller manager
  */
-void controlThread(ros::Rate rate, dingo_base::DingoHardware* robot, controller_manager::ControllerManager* cm)
+void control(ros::Rate rate, dingo_base::DingoHardware* robot, controller_manager::ControllerManager* cm)
 {
-  time_source::time_point last_time = time_source::now();
+  std::chrono::steady_clock::time_point last_time = std::chrono::steady_clock::now();
 
-  while (1)
+  while (ros::ok)
   {
     // Calculate monotonic time elapsed
-    time_source::time_point this_time = time_source::now();
-    boost::chrono::duration<double> elapsed_duration = this_time - last_time;
+    std::chrono::steady_clock::time_point this_time = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed_duration = this_time - last_time;
     ros::Duration elapsed(elapsed_duration.count());
     last_time = this_time;
 
@@ -80,8 +78,6 @@ void controlThread(ros::Rate rate, dingo_base::DingoHardware* robot, controller_
       robot->configure();
     }
 
-    robot->canSend();
-
     cm->update(ros::Time::now(), elapsed, robot->inReset());
 
     if (robot->isActive())
@@ -93,8 +89,6 @@ void controlThread(ros::Rate rate, dingo_base::DingoHardware* robot, controller_
     {
       robot->verify();
     }
-
-    robot->canSend();
     rate.sleep();
   }
 }
@@ -104,9 +98,9 @@ void controlThread(ros::Rate rate, dingo_base::DingoHardware* robot, controller_
  *  @param[in] rate Controls the rate at which CAN bus is read
  *  @param[in] robot Handle to the hardware for the robot
  */
-void canReadThread(ros::Rate rate, dingo_base::DingoHardware* robot)
+void canRead(ros::Rate rate, dingo_base::DingoHardware* robot)
 {
-  while (1)
+  while (ros::ok)
   {
     robot->canRead();
     rate.sleep();
@@ -116,7 +110,8 @@ void canReadThread(ros::Rate rate, dingo_base::DingoHardware* robot)
 int main(int argc, char* argv[])
 {
   // Initialize ROS node.
-  ros::init(argc, argv, "dingo_node");
+  const std::string node_name = "dingo_node";
+  ros::init(argc, argv, node_name);
   ros::NodeHandle nh, pnh("~");
 
   // Create the socket rosserial server in a background ASIO event loop.
@@ -124,40 +119,44 @@ int main(int argc, char* argv[])
   rosserial_server::UdpSocketSession* socket;
   boost::thread socket_thread;
 
-  bool use_mcu = true;
-  pnh.param<bool>("use_mcu", use_mcu, true);
+  const std::string BASE_IP = "192.168.131.1";
+  const std::string MCU_IP = "192.168.131.2";
+  const uint32_t ROSSERIAL_PORT = 11411;
+  const uint32_t LOGGER_PORT    = 11413;
 
-  if (use_mcu)
-  {
-      socket = new rosserial_server::UdpSocketSession(io_service,
-          udp::endpoint(address::from_string("192.168.131.1"), 11411),
-          udp::endpoint(address::from_string("192.168.131.2"), 11411));
-      socket_thread = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
-  }
+  // Network MCU logger
+  std::string logger_name = node_name + "_mcu";
+  dingo_base::DingoLogger logger(logger_name, nh, 1000);
+  logger.configure(BASE_IP, LOGGER_PORT, MCU_IP, LOGGER_PORT);
+  logger.init();
+  std::thread logger_thread = logger.runThread();
+
+  socket = new rosserial_server::UdpSocketSession(io_service,
+      udp::endpoint(address::from_string(BASE_IP), ROSSERIAL_PORT),
+      udp::endpoint(address::from_string(MCU_IP), ROSSERIAL_PORT));
+  socket_thread = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
 
   std::string canbus_dev;
   pnh.param<std::string>("canbus_dev", canbus_dev, "can0");
   puma_motor_driver::SocketCANGateway gateway(canbus_dev);
 
-  // TODO(tbaltovski): how to choose between differential and mechanum
-  dingo_base::DingoHardware dingo(dingo_base::DingoHardware::DingoType::DINGO_D, nh, pnh, gateway);
+  bool dingo_omni = false;
+  pnh.param<bool>("dingo_omni", dingo_omni, false);
+  dingo_base::DingoHardware dingo(nh, pnh, gateway, dingo_omni);
 
   // Configure the CAN connection
   dingo.init();
   // Create a thread to start reading can messages.
-  boost::thread canReadT(&canReadThread, ros::Rate(200), &dingo);
+  std::thread can_read_thread(&canRead, ros::Rate(200), &dingo);
 
   // Background thread for the controls callback.
   ros::NodeHandle controller_nh("");
   controller_manager::ControllerManager cm(&dingo, controller_nh);
-  boost::thread controlT(&controlThread, ros::Rate(25), &dingo, &cm);
+  std::thread control_thread(&control, ros::Rate(25), &dingo, &cm);
 
   // Lighting control.
   dingo_base::DingoLighting* lighting;
-  if (use_mcu)
-  {
-    lighting = new dingo_base::DingoLighting(&nh);
-  }
+  lighting = new dingo_base::DingoLighting(&nh);
 
   // Create diagnostic updater, to update itself on the ROS thread.
   dingo_base::DingoDiagnosticUpdater dingo_diagnostic_updater;
@@ -165,13 +164,12 @@ int main(int argc, char* argv[])
 
   // Cooling control for the fans.
   dingo_base::DingoCooling* cooling;
-  if (use_mcu)
-  {
-      cooling = new dingo_base::DingoCooling(&nh);
-  }
+  cooling = new dingo_base::DingoCooling(&nh);
 
   // Foreground ROS spinner for ROS callbacks, including rosserial, diagnostics
   ros::spin();
+
+  logger_thread.join();
 
   return 0;
 }

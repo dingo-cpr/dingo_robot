@@ -8,8 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS thread chrono)
 
 catkin_package()
-catkin_add_env_hooks(50.dingo_find_mag_config
-  SHELLS sh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -21,7 +19,8 @@ add_executable(dingo_node
   src/dingo_cooling.cpp
   src/dingo_diagnostic_updater.cpp
   src/dingo_hardware.cpp
-  src/dingo_lighting.cpp)
+  src/dingo_lighting.cpp
+  src/dingo_logger.cpp)
 target_link_libraries(dingo_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(dingo_node ${catkin_EXPORTED_TARGETS})
 
@@ -36,8 +35,7 @@ install(TARGETS dingo_node
 
 if (CATKIN_ENABLE_TESTING)
   find_package(roslaunch REQUIRED)
-  roslaunch_add_file_check(launch/base.dingo_d.launch)
-  roslaunch_add_file_check(launch/base.dingo_o.launch)
+  roslaunch_add_file_check(launch/base.launch)
 
   find_package(roslint REQUIRED)
   roslint_cpp()
