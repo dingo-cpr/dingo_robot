@@ -9,7 +9,7 @@
   </node>
 
   <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter">
-    <rosparam file="$(eval optenv('DINGO_MAG_CONFIG', find('dingo_bringup')+'/config/mag_config_default.yaml'))" />
+    <rosparam file="$(eval optenv('DINGO_MAG_CONFIG', find('dingo_base')+'/config/mag_config_default.yaml'))" />
     <rosparam>
       gain: 0.1
       zeta: 0.001
