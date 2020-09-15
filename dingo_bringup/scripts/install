@@ -6,6 +6,7 @@ import robot_upstart
 from catkin.find_in_workspaces import find_in_workspaces
 
 main_job = robot_upstart.Job(workspace_setup=os.environ['ROBOT_SETUP'])
+main_job.symlink=True
 main_job.add(package="dingo_base", filename="launch/base.launch")
 main_job.add(package="dingo_bringup", filename="launch/accessories.launch")
 main_job.install()
