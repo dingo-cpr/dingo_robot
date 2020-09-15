@@ -57,16 +57,16 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
   std::vector<float> joint_directions;
   if (!dingo_omni)
   {
-    joint_names.assign( {"left_wheel", "right_wheel"} );  // NOLINT(whitespace/braces)
-    joint_can_ids.assign({2, 3});
-    joint_directions.assign({1, -1});
+    joint_names.assign({"left_wheel", "right_wheel"});  // NOLINT(whitespace/braces)
+    joint_can_ids.assign({2, 3});                       // NOLINT(whitespace/braces)
+    joint_directions.assign({1, -1});                   // NOLINT(whitespace/braces)
   }
   else
   {
     joint_names.assign({"front_left_wheel", "front_right_wheel",  // NOLINT(whitespace/braces)
         "rear_left_wheel", "rear_right_wheel"});                  // NOLINT(whitespace/braces)
-    joint_can_ids.assign({2, 3, 4, 5});
-    joint_directions.assign({1, -1, 1, -1});
+    joint_can_ids.assign({2, 3, 4, 5});                           // NOLINT(whitespace/braces)
+    joint_directions.assign({1, -1, 1, -1});                      // NOLINT(whitespace/braces)
   }
 
   for (uint8_t i = 0; i < joint_names.size(); i++)

@@ -30,7 +30,7 @@
  * Please send comments, questions, or patches to code@clearpathrobotics.com
  */
 
-#include <chrono>
+#include <chrono>  // NOLINT(build/c++11)
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>

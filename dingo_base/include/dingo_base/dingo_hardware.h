@@ -54,7 +54,6 @@ namespace dingo_base
 class DingoHardware : public hardware_interface::RobotHW
 {
 public:
-
   /** Initializes joints, callbacks, etc.
    *  @param[in] nh Handle used for ROS communication
    *  @param[in] pnh Handle used for Puma communication to set parameters
