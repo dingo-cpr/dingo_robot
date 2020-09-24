@@ -30,46 +30,43 @@
  * Please send comments, questions, or patches to code@clearpathrobotics.com
  */
 
+#include <boost/assign.hpp>
 #include <vector>
-#include "boost/assign.hpp"
-#include "boost/shared_ptr.hpp"
+
+#include <puma_motor_driver/driver.h>
+#include <puma_motor_driver/multi_driver_node.h>
+
 #include "dingo_base/dingo_hardware.h"
-#include "puma_motor_driver/driver.h"
-#include "puma_motor_driver/multi_driver_node.h"
 
 namespace dingo_base
 {
 
-DingoHardware::DingoHardware(DingoType type, ros::NodeHandle& nh,
-    ros::NodeHandle& pnh, puma_motor_driver::Gateway& gateway):
-  dingo_type_(type),
+DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
+                             puma_motor_driver::Gateway& gateway, bool& dingo_omni):
   nh_(nh),
   pnh_(pnh),
   gateway_(gateway),
   active_(false)
 {
-  pnh_.param<double>("gear_ratio", gear_ratio_, 34.97);  // TODO(tbaltovski): to update
-  pnh_.param<int>("encoder_cpr", encoder_cpr_, 1024);    // TODO(tbaltovski): to update
+  pnh_.param<double>("gear_ratio", gear_ratio_, 24);
+  pnh_.param<int>("encoder_cpr", encoder_cpr_, 10);
 
   // Set up the wheels: differs for Dingo-D vs Dingo-O
   ros::V_string joint_names;
-  std::vector<uint8_t> joint_canids;
+  std::vector<uint8_t> joint_can_ids;
   std::vector<float> joint_directions;
-  switch (dingo_type_)
+  if (!dingo_omni)
   {
-    case DingoType::DINGO_D:
-      // TODO(tbaltovski): to check these CAN IDs and directions
-      joint_names.assign({"left_wheel", "right_wheel"});  // NOLINT(whitespace/braces)
-      joint_canids.assign({2, 3});       // NOLINT(whitespace/braces)
-      joint_directions.assign({-1, 1});  // NOLINT(whitespace/braces)
-      break;
-    case DingoType::DINGO_O:
-      // TODO(tbaltovski): to check these CAN IDs and directions
-      joint_names.assign({"front_left_wheel", "front_right_wheel",  // NOLINT(whitespace/braces)
-          "rear_left_wheel", "rear_right_wheel"});                  // NOLINT(whitespace/braces)
-      joint_canids.assign({5, 4, 2, 3});        // NOLINT(whitespace/braces)
-      joint_directions.assign({-1, 1, -1, 1});  // NOLINT(whitespace/braces)
-      break;
+    joint_names.assign({"left_wheel", "right_wheel"});  // NOLINT(whitespace/braces)
+    joint_can_ids.assign({2, 3});                       // NOLINT(whitespace/braces)
+    joint_directions.assign({1, -1});                   // NOLINT(whitespace/braces)
+  }
+  else
+  {
+    joint_names.assign({"front_left_wheel", "front_right_wheel",  // NOLINT(whitespace/braces)
+        "rear_left_wheel", "rear_right_wheel"});                  // NOLINT(whitespace/braces)
+    joint_can_ids.assign({2, 3, 4, 5});                           // NOLINT(whitespace/braces)
+    joint_directions.assign({1, -1, 1, -1});                      // NOLINT(whitespace/braces)
   }
 
   for (uint8_t i = 0; i < joint_names.size(); i++)
@@ -82,11 +79,11 @@ DingoHardware::DingoHardware(DingoType type, ros::NodeHandle& nh,
         joint_state_handle, &joints_[i].velocity_command);
     velocity_joint_interface_.registerHandle(joint_handle);
 
-    puma_motor_driver::Driver driver(gateway_, joint_canids[i], joint_names[i]);
-    driver.clearStatusCache();
+    puma_motor_driver::Driver driver(gateway_, joint_can_ids[i], joint_names[i]);
+    driver.clearMsgCache();
     driver.setEncoderCPR(encoder_cpr_);
     driver.setGearRatio(gear_ratio_ * joint_directions[i]);
-    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, 0.1, 0.01, 0.0);  // TODO(tbaltovski): to check
+    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, 0.025, 0.001, 0.0);
     drivers_.push_back(driver);
   }
 
@@ -123,7 +120,7 @@ bool DingoHardware::connectIfNotConnected()
 
 void DingoHardware::configure()
 {
-  BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+  for (auto& driver : drivers_)
   {
     driver.configureParams();
   }
@@ -131,59 +128,43 @@ void DingoHardware::configure()
 
 void DingoHardware::verify()
 {
-  BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+  for (auto& driver : drivers_)
   {
     driver.verifyParams();
   }
 }
 
+bool DingoHardware::areAllDriversActive()
+{
+  for (auto& driver : drivers_)
+  {
+    if (!driver.isConfigured())
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool DingoHardware::isActive()
 {
-  switch (dingo_type_)
+  if (active_ == false && this->areAllDriversActive())
   {
-    case DingoType::DINGO_D:
-      if (active_ == false
-         && drivers_[0].isConfigured() == true
-         && drivers_[1].isConfigured() == true)
-      {
-        active_ = true;
-        multi_driver_node_->activePublishers(active_);
-      }
-      else if ((drivers_[0].isConfigured() == false
-        || drivers_[1].isConfigured() == false)
-        && active_ == true)
-      {
-        active_ = false;
-      }
-      break;
-    case DingoType::DINGO_O:
-      if (active_ == false
-         && drivers_[0].isConfigured() == true
-         && drivers_[1].isConfigured() == true
-         && drivers_[2].isConfigured() == true
-         && drivers_[3].isConfigured() == true)
-      {
-        active_ = true;
-        multi_driver_node_->activePublishers(active_);
-      }
-      else if ((drivers_[0].isConfigured() == false
-        || drivers_[1].isConfigured() == false
-        || drivers_[2].isConfigured() == false
-        || drivers_[3].isConfigured() == false)
-        && active_ == true)
-      {
-        active_ = false;
-      }
-      break;
+    active_ = true;
+    multi_driver_node_->activePublishers(active_);
+  }
+  else if (!this->areAllDriversActive() && active_ == true)
+  {
+    active_ = false;
   }
 
   if (active_)
   {
-    ROS_INFO("Dingo Hardware Active.");
+    ROS_INFO_THROTTLE(60, "Dingo Hardware Active.");
   }
   else
   {
-    ROS_WARN("Dingo Hardware Inactive.");
+    ROS_WARN_THROTTLE(60, "Dingo Hardware Inactive.");
   }
 
   return active_;
@@ -192,14 +173,14 @@ bool DingoHardware::isActive()
 void DingoHardware::powerHasNotReset()
 {
   // Checks to see if power flag has been reset for each driver
-  BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+  for (auto& driver : drivers_)
   {
     if (driver.lastPower() != 0)
     {
       active_ = false;
       ROS_WARN("There was a power reset on Dev: %d, will reconfigure all drivers.", driver.deviceNumber());
       multi_driver_node_->activePublishers(active_);
-      BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+      for (auto& driver : drivers_)
       {
         driver.resetConfiguration();
       }
@@ -214,7 +195,7 @@ bool DingoHardware::inReset()
 
 void DingoHardware::requestData()
 {
-  BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+  for (auto& driver : drivers_)
   {
     driver.requestFeedbackPowerState();
   }
@@ -223,7 +204,7 @@ void DingoHardware::requestData()
 void DingoHardware::updateJointsFromHardware()
 {
   uint8_t index = 0;
-  BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+  for (auto& driver : drivers_)
   {
     Joint* f = &joints_[index];
     f->effort = driver.lastCurrent();
@@ -236,7 +217,7 @@ void DingoHardware::updateJointsFromHardware()
 void DingoHardware::command()
 {
   uint8_t i = 0;
-  BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+  for (auto& driver : drivers_)
   {
     driver.commandSpeed(joints_[i].velocity_command);
     i++;
@@ -248,16 +229,11 @@ void DingoHardware::canRead()
   puma_motor_driver::Message recv_msg;
   while (gateway_.recv(&recv_msg))
   {
-    BOOST_FOREACH(puma_motor_driver::Driver& driver, drivers_)
+    for (auto& driver : drivers_)
     {
       driver.processMessage(recv_msg);
     }
   }
-}
-
-void DingoHardware::canSend()
-{
-  gateway_.sendAllQueued();
 }
 
 }  // namespace dingo_base

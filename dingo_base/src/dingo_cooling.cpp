@@ -37,16 +37,16 @@
 namespace dingo_base
 {
 
-const double DingoCooling::LINEAR_VEL_THRESHOLD = 0.1;  // m/s
-const double DingoCooling::ANGULAR_VEL_THRESHOLD = 0.4;  // rad/s
-const double DingoCooling::MOTION_COMMAND_TIMEOUT = 3.0;  // Seconds.
+const double DingoCooling::LINEAR_VEL_THRESHOLD = 0.1;    // m/s
+const double DingoCooling::ANGULAR_VEL_THRESHOLD = 0.4;   // rad/s
+const double DingoCooling::MOTION_COMMAND_TIMEOUT = 3.0;  // seconds
 
 DingoCooling::DingoCooling(ros::NodeHandle* nh) :
   nh_(nh),
   last_motion_cmd_time_(0)
 {
   cmd_fans_pub_ = nh_->advertise<dingo_msgs::Fans>("mcu/cmd_fans", 1);
-  cmd_vel_sub_ = nh_->subscribe("cmd_vel", 1, &DingoCooling::cmdVelCallback, this);
+  cmd_vel_sub_ = nh_->subscribe("dingo_velocity_controller/cmd_vel", 1, &DingoCooling::cmdVelCallback, this);
   cmd_fans_timer_ = nh_->createTimer(ros::Duration(1.0/10), &DingoCooling::cmdFansCallback, this);
   cmd_fans_msg_.fan = dingo_msgs::Fans::FAN_ON_LOW;
 }
