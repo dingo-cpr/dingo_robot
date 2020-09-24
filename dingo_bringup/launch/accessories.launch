@@ -176,18 +176,18 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
         <remap from="/points" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/color/points" />
       </node>
     </group>
-  </group>
 
-  <!--
-    Add a laserscan topic we can use for SLAM purposes.
-    This will publish on e.g. /realsense/scan
-  -->
-  <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="$(optenv DINGO_REALSENSE_TOPIC realsense)_depth2laser">
-    <remap from="/image" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/image_rect_raw"/>
-    <remap from="/camera_info" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/camera_info"/>
-    <param name="range_min" value="0.1" />
-    <param name="range_max" value="8.0" />
-    <param name="output_frame_id" value="$(optenv DINGO_REALSENSE_MOUNT front)_realsense_link" />
-    <remap from="/scan" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/scan" />
-  </node>
+    <!--
+      Add a laserscan topic we can use for SLAM purposes.
+      This will publish on e.g. /realsense/scan
+    -->
+    <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="$(optenv DINGO_REALSENSE_TOPIC realsense)_depth2laser">
+      <remap from="/image" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/image_rect_raw"/>
+      <remap from="/camera_info" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/camera_info"/>
+      <param name="range_min" value="0.1" />
+      <param name="range_max" value="8.0" />
+      <param name="output_frame_id" value="$(optenv DINGO_REALSENSE_MOUNT front)_realsense_link" />
+      <remap from="/scan" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/scan" />
+    </node>
+  </group>
 </launch>
