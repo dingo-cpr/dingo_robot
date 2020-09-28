@@ -83,7 +83,7 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
     driver.clearMsgCache();
     driver.setEncoderCPR(encoder_cpr_);
     driver.setGearRatio(gear_ratio_ * joint_directions[i]);
-    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, 0.025, 0.001, 0.0);
+    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, 0.025, 0.005, 0.0);
     drivers_.push_back(driver);
   }
 
