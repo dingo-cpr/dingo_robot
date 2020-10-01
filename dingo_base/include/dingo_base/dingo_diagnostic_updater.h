@@ -33,6 +33,8 @@
 #ifndef DINGO_BASE_DINGO_DIAGNOSTIC_UPDATER_H
 #define DINGO_BASE_DINGO_DIAGNOSTIC_UPDATER_H
 
+#define AVERAGE_VOLTAGE_WINDOW_SIZE 30
+
 #include <string>
 #include <list>
 
@@ -131,11 +133,20 @@ private:
   /** used to measure the last 30s worth of 12V measurements so we can average them **/
   std::list<double> measured_voltage_12_;
 
-  /** used to measure the last 30s worth of 24V measurements so we can average them **/
-  std::list<double> measured_voltage_24_;
+  /** used to measure the last 30s worth of 5V measurements so we can average them **/
+  std::list<double> measured_voltage_5_;
 
   /** used to measure the last 30s worth of battery measurements so we can average them **/
   std::list<double> measured_voltage_battery_;
+
+  /** The rolling average of the 12V measurements **/
+  double avg_voltage_12_;
+
+  /** The rolling average of the 5V measurements **/
+  double avg_voltage_5_;
+
+  /** The rolling average of the battery measurements **/
+  double avg_voltage_battery_;
 
   /**
    * Averages the values saved in a queue and returns the result
