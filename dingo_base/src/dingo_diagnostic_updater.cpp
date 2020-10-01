@@ -254,13 +254,30 @@ void DingoDiagnosticUpdater::wirelessMonitorCallback(const ros::TimerEvent& te)
   wifi_connected_pub_.publish(wifi_connected_msg);
 }
 
-double DingoDiagnosticUpdater::average_voltage(std::list<double> &measurements)
+double DingoDiagnosticUpdater::average_voltage(const std::list<double> &measurements)
 {
+#if 1
+  // calculate the median of the measurements
+  // this should be less-sensitive to spikes in the draw
+  if (measurements.size() > 0)
+  {
+    std::vector<double> cpy(measurements.size());
+    std::for_each(measurements.begin(), measurements.end(), [&](const double &x){
+      cpy.push_back(x);
+    });
+    std::sort(cpy.begin(), cpy.end());
+    return cpy[cpy.size()/2];
+  }
+  else
+    return 0.0;
+#else
+  // calculate the average of the measurements
   double total = 0.0;
   std::for_each(measurements.begin(), measurements.end(), [&](const double &x) {
     total += x;
   });
   return total / measurements.size();
+#endif
 }
 
 }  // namespace dingo_base

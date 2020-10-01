@@ -141,7 +141,7 @@ private:
    * @param[measurements] The queue we're averaging
    * @return The average of all the values in the queue
    **/
-  double average_voltage(std::list<double> &measurements);
+  double average_voltage(const std::list<double> &measurements);
 };
 
 }  // namespace dingo_base
