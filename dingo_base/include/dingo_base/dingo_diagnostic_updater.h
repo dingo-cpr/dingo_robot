@@ -34,6 +34,7 @@
 #define DINGO_BASE_DINGO_DIAGNOSTIC_UPDATER_H
 
 #include <string>
+#include <list>
 
 #include "ros/ros.h"
 #include "std_msgs/Bool.h"
@@ -126,6 +127,22 @@ private:
 
   /** Used to publish wifi connectivity updates */
   ros::Publisher wifi_connected_pub_;
+
+  /** used to measure the last 30s worth of 12V measurements so we can average them **/
+  std::list<double> measured_voltage_12_;
+
+  /** used to measure the last 30s worth of 24V measurements so we can average them **/
+  std::list<double> measured_voltage_24_;
+
+  /** used to measure the last 30s worth of battery measurements so we can average them **/
+  std::list<double> measured_voltage_battery_;
+
+  /**
+   * Averages the values saved in a queue and returns the result
+   * @param[measurements] The queue we're averaging
+   * @return The average of all the values in the queue
+   **/
+  double average_voltage(std::list<double> &measurements);
 };
 
 }  // namespace dingo_base
