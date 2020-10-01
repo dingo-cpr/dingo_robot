@@ -43,11 +43,7 @@ namespace dingo_base
 {
 
 DingoDiagnosticUpdater::DingoDiagnosticUpdater() :
-  measured_voltage_12_(),
-  measured_voltage_5_(),
   measured_voltage_battery_(),
-  avg_voltage_12_(0),
-  avg_voltage_5_(0),
   avg_voltage_battery_(0)
 {
   setHardwareID("unknown");
@@ -127,29 +123,19 @@ void DingoDiagnosticUpdater::batteryDiagnostics(diagnostic_updater::DiagnosticSt
 
 void DingoDiagnosticUpdater::voltageDiagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
-  measured_voltage_12_.push_back(last_status_->measured_12v);
-  if (measured_voltage_12_.size() > AVERAGE_VOLTAGE_WINDOW_SIZE)
-    measured_voltage_12_.pop_front();
-  avg_voltage_12_ = average_voltage(measured_voltage_12_);
+  stat.add("12V Supply (V)", last_status_->measured_12v);
+  stat.add("5V Supply (V)", last_status_->measured_5v);
 
-  measured_voltage_5_.push_back(last_status_->measured_5v);
-  if (measured_voltage_5_.size() > AVERAGE_VOLTAGE_WINDOW_SIZE)
-    measured_voltage_5_.pop_front();
-  avg_voltage_5_ = average_voltage(measured_voltage_5_);
-
-  stat.add("12V Supply (V)", avg_voltage_12_);
-  stat.add("5V Supply (V)", avg_voltage_5_);
-
-  if (avg_voltage_12_ > 12.5 || lavg_voltage_5_)
+  if (last_status_->measured_12v > 12.5 || last_status_->measured_5v)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR,
         "User supply overvoltage. Accessories may be damaged.");
   }
-  else if (avg_voltage_12_ < 1.0 || avg_voltage_5_)
+  else if (last_status_->measured_12v < 1.0 || last_status_->measured_5v)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "User supplies absent. Check tray fuses.");
   }
-  else if (avg_voltage_12_ < 11.0 || avg_voltage_5_)
+  else if (last_status_->measured_12v < 11.0 || last_status_->measured_5v)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Voltage supplies undervoltage. Check loading levels.");
   }

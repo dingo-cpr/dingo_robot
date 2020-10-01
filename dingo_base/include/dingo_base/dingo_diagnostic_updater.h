@@ -130,20 +130,8 @@ private:
   /** Used to publish wifi connectivity updates */
   ros::Publisher wifi_connected_pub_;
 
-  /** used to measure the last 30s worth of 12V measurements so we can average them **/
-  std::list<double> measured_voltage_12_;
-
-  /** used to measure the last 30s worth of 5V measurements so we can average them **/
-  std::list<double> measured_voltage_5_;
-
   /** used to measure the last 30s worth of battery measurements so we can average them **/
   std::list<double> measured_voltage_battery_;
-
-  /** The rolling average of the 12V measurements **/
-  double avg_voltage_12_;
-
-  /** The rolling average of the 5V measurements **/
-  double avg_voltage_5_;
 
   /** The rolling average of the battery measurements **/
   double avg_voltage_battery_;
