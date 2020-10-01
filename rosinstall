@@ -1,0 +1,2 @@
+- git: {local-name: dingo_robot, uri: 'https://github.com/dingo_cpr/dingo_robot', version: melodic-devel}
+- git: {local-name: puma_motor_driver.git, uri: 'https://github.com/clearpathrobotics/puma_motor_driver.git', version: dingo-rework}

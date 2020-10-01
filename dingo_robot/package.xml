@@ -12,7 +12,8 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>dingo_bringup</run_depend>
-  <run_depend>dingo_firmware</run_depend>
+  <!-- Removed dependency on firmware for now. -->
+  <!-- <run_depend>dingo_firmware</run_depend> -->
 
   <export>
     <metapackage />
