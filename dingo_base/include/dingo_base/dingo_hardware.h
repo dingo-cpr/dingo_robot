@@ -139,6 +139,12 @@ private:
   /** The number of encoding steps per revolution */
   int encoder_cpr_;
 
+  /** The PID gains for the motor controller */
+  double gain_p_, gain_i_, gain_d_;
+
+  /** Indicates if the motor direction should be flipped */
+  bool flip_motor_direction_;
+
   /** ROS Control interface for joint state */
   hardware_interface::JointStateInterface joint_state_interface_;
 

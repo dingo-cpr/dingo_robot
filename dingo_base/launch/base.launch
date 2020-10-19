@@ -1,10 +1,13 @@
 <launch>
+  <arg name="motor_params" default="$(optenv DINGO_MOTOR_PARAMS base)" />
+
   <include file="$(find dingo_description)/launch/description.launch" />
 
   <node pkg="rosserial_python" type="message_info_service.py" name="rosserial_message_info" />
 
   <node pkg="dingo_base" type="dingo_node" name="dingo_node" output="screen">
     <param name="dingo_omni" type="bool" value="$(optenv DINGO_OMNI 0)" />
+    <rosparam command="load" file="$(find dingo_base)/config/$(arg motor_params).yaml" />
     <param name="wireless_interface" value="$(optenv DINGO_WIRELESS_INTERFACE wlp2s0)" />
   </node>
 
