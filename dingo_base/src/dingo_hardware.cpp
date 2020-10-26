@@ -50,6 +50,10 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
 {
   pnh_.param<double>("gear_ratio", gear_ratio_, 24);
   pnh_.param<int>("encoder_cpr", encoder_cpr_, 10);
+  pnh_.param<bool>("flip_motor_direction", flip_motor_direction_, false);
+  pnh_.param<double>("gains/p", gain_p_, 0.025);
+  pnh_.param<double>("gains/i", gain_i_, 0.005);
+  pnh_.param<double>("gains/d", gain_d_, 0.0);
 
   // Set up the wheels: differs for Dingo-D vs Dingo-O
   ros::V_string joint_names;
@@ -69,6 +73,15 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
     joint_directions.assign({1, -1, 1, -1});                      // NOLINT(whitespace/braces)
   }
 
+  // Flip the motor direction if needed
+  if (flip_motor_direction_)
+  {
+    for (std::size_t i = 0; i < joint_directions.size(); i++)
+    {
+      joint_directions[i] *= -1;
+    }
+  }
+
   for (uint8_t i = 0; i < joint_names.size(); i++)
   {
     hardware_interface::JointStateHandle joint_state_handle(joint_names[i],
@@ -83,7 +96,7 @@ DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
     driver.clearMsgCache();
     driver.setEncoderCPR(encoder_cpr_);
     driver.setGearRatio(gear_ratio_ * joint_directions[i]);
-    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, 0.025, 0.005, 0.0);
+    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, gain_p_, gain_i_, gain_d_);
     drivers_.push_back(driver);
   }
 
