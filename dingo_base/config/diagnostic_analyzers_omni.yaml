@@ -11,5 +11,5 @@ analyzers:
         expected: [
           'dingo_node: Puma motor driver on: front_left_wheel with CAN ID (2)',
           'dingo_node: Puma motor driver on: front_right_wheel with CAN ID (3)',
-          'dingo_node: Puma motor driver on: rear_right_wheel with CAN ID (4)',
-          'dingo_node: Puma motor driver on: rear_left_wheel with CAN ID (5)']
+          'dingo_node: Puma motor driver on: rear_left_wheel with CAN ID (4)',
+          'dingo_node: Puma motor driver on: rear_right_wheel with CAN ID (5)']
