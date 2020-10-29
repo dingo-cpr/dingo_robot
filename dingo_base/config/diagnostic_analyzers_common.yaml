@@ -14,7 +14,8 @@ analyzers:
           'dingo_node: User voltage supplies',
           'dingo_node: Current consumption',
           'dingo_node: Power consumption' ,
-          'dingo_node: Temperature' ]
+          'dingo_node: Temperature',
+          'dingo_node: Wi-Fi connected']
       sensors:
         type: diagnostic_aggregator/GenericAnalyzer
         path: Sensor Topics
