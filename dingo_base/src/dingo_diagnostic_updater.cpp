@@ -39,6 +39,25 @@
 #include "diagnostic_updater/update_functions.h"
 #include "dingo_base/dingo_diagnostic_updater.h"
 
+// battery & user voltage warning levels
+#define VOLTAGE_ABSENT           1.0
+#define BATTERY_OVER_VOLT       16.8   // TODO(tbaltovski): different for SLA vs Lithium
+#define BATTERY_CRITICAL_VOLT   11.2   // TODO(tbaltovski): different for SLA vs Lithium
+#define BATTERY_LOW_VOLT        12.0   // TODO(tbaltovski): different for SLA vs Lithium
+#define USER_VOLT_12_LOW        11.0
+#define USER_VOLT_5_LOW          4.0
+#define USER_VOLT_12_HIGH       12.5
+#define USER_VOLT_5_HIGH         5.5
+
+// amperage warning levels
+#define CURRENT_DRAW_CRITICAL   32.0   // TODO(tbaltovski): check current thresholds
+#define CURRENT_DRAW_WARNING    20.0   // TODO(tbaltovski): check current thresholds
+#define CURRENT_DRAW_REMINDER   10.0   // TODO(tbaltovski): check current thresholds
+
+// temperature warnings for PCB & MCU
+#define TEMPERATURE_CRITICAL   100.0
+#define TEMPERATURE_WARNING     60.0
+
 namespace dingo_base
 {
 
@@ -92,19 +111,19 @@ void DingoDiagnosticUpdater::batteryDiagnostics(diagnostic_updater::DiagnosticSt
 {
   stat.add("Battery Voltage (V)", last_status_->measured_battery);
 
-  if (last_status_->measured_battery > 16.8)  // TODO(tbaltovski): different for SLA vs Lithium
+  if (last_status_->measured_battery > BATTERY_OVER_VOLT)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery overvoltage.");
   }
-  else if (last_status_->measured_battery < 1.0)
+  else if (last_status_->measured_battery < VOLTAGE_ABSENT)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery voltage not detected, check BATT fuse.");
   }
-  else if (last_status_->measured_battery < 11.2)  // TODO(tbaltovski): different for SLA vs Lithium
+  else if (last_status_->measured_battery < BATTERY_CRITICAL_VOLT)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery critically under voltage.");
   }
-  else if (last_status_->measured_battery < 12.0)  // TODO(tbaltovski): different for SLA vs Lithium
+  else if (last_status_->measured_battery < BATTERY_LOW_VOLT)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Battery low voltage.");
   }
@@ -119,16 +138,16 @@ void DingoDiagnosticUpdater::voltageDiagnostics(diagnostic_updater::DiagnosticSt
   stat.add("12V Supply (V)", last_status_->measured_12v);
   stat.add("5V Supply (V)", last_status_->measured_5v);
 
-  if (last_status_->measured_12v > 12.5 || last_status_->measured_5v > 5.5)
+  if (last_status_->measured_12v > USER_VOLT_12_HIGH || last_status_->measured_5v > USER_VOLT_5_HIGH)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR,
         "User supply overvoltage. Accessories may be damaged.");
   }
-  else if (last_status_->measured_12v < 1.0 || last_status_->measured_5v < 1.0)
+  else if (last_status_->measured_12v < VOLTAGE_ABSENT || last_status_->measured_5v < VOLTAGE_ABSENT)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "User supplies absent. Check tray fuses.");
   }
-  else if (last_status_->measured_12v < 11.0 || last_status_->measured_5v < 4.0)
+  else if (last_status_->measured_12v < USER_VOLT_12_LOW || last_status_->measured_5v < USER_VOLT_5_LOW)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Voltage supplies undervoltage. Check loading levels.");
   }
@@ -142,15 +161,15 @@ void DingoDiagnosticUpdater::currentDiagnostics(diagnostic_updater::DiagnosticSt
 {
   stat.add("Total current (A)", last_status_->total_current);
 
-  if (last_status_->total_current > 32.0)  // TODO(tbaltovski): check current thresholds
+  if (last_status_->total_current > CURRENT_DRAW_CRITICAL)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Current draw critical.");
   }
-  else if (last_status_->total_current > 20.0)  // TODO(tbaltovski): check current thresholds
+  else if (last_status_->total_current > CURRENT_DRAW_WARNING)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Current draw warning.");
   }
-  else if (last_status_->total_current > 10.0)  // TODO(tbaltovski): check current thresholds
+  else if (last_status_->total_current > CURRENT_DRAW_REMINDER)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Current draw requires monitoring.");
   }
@@ -165,6 +184,15 @@ void DingoDiagnosticUpdater::powerDiagnostics(diagnostic_updater::DiagnosticStat
   stat.add("Shore power connnected", last_status_->shore_power_connected);
   stat.add("Battery connnected", last_status_->battery_connected);
   stat.add("12V user power nominal", last_status_->power_12v_user_nominal);
+
+  if (last_status_->shore_power_connected)
+  {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Shore power connected.");
+  }
+  else
+  {
+    stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Running on battery.");
+  }
 }
 
 void DingoDiagnosticUpdater::temperatureDiagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
@@ -172,11 +200,11 @@ void DingoDiagnosticUpdater::temperatureDiagnostics(diagnostic_updater::Diagnost
   stat.add("PCB temperature (C)", last_status_->pcb_temperature);
   stat.add("MCU temperature (C)", last_status_->mcu_temperature);
 
-  if (last_status_->pcb_temperature > 100.0)
+  if (last_status_->pcb_temperature > TEMPERATURE_CRITICAL)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "PCB temperature too HOT.");
   }
-  else if (last_status_->pcb_temperature > 60.0)
+  else if (last_status_->pcb_temperature > TEMPERATURE_WARNING)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "PCB temperature getting warm.");
   }
@@ -185,11 +213,11 @@ void DingoDiagnosticUpdater::temperatureDiagnostics(diagnostic_updater::Diagnost
     stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "PCB temperature OK.");
   }
 
-  if (last_status_->mcu_temperature > 100.0)
+  if (last_status_->mcu_temperature > TEMPERATURE_CRITICAL)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "MCU temperature too HOT.");
   }
-  else if (last_status_->mcu_temperature > 60.0)
+  else if (last_status_->mcu_temperature > TEMPERATURE_WARNING)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "MCU temperature getting warm.");
   }
