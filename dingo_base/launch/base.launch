@@ -31,13 +31,13 @@
   <group if="$(optenv DINGO_OMNI 0)">
     <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator">
       <rosparam command="load" file="$(find dingo_base)/config/diagnostic_analyzers_common.yaml" />
-      <rosparam command="load" file="$(find dingo_base)/config/diagnostic_analyzers_diff.yaml" />
+      <rosparam command="load" file="$(find dingo_base)/config/diagnostic_analyzers_omni.yaml" />
     </node>
   </group>
   <group unless="$(optenv DINGO_OMNI 0)">
     <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator">
       <rosparam command="load" file="$(find dingo_base)/config/diagnostic_analyzers_common.yaml" />
-      <rosparam command="load" file="$(find dingo_base)/config/diagnostic_analyzers_omni.yaml" />
+      <rosparam command="load" file="$(find dingo_base)/config/diagnostic_analyzers_diff.yaml" />
     </node>
   </group>
 </launch>
