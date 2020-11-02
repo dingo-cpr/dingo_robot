@@ -40,23 +40,23 @@
 #include "dingo_base/dingo_diagnostic_updater.h"
 
 // battery & user voltage warning levels
-#define VOLTAGE_ABSENT           1.0
-#define BATTERY_OVER_VOLT       16.8   // TODO(tbaltovski): different for SLA vs Lithium
-#define BATTERY_CRITICAL_VOLT   11.2   // TODO(tbaltovski): different for SLA vs Lithium
-#define BATTERY_LOW_VOLT        12.0   // TODO(tbaltovski): different for SLA vs Lithium
-#define USER_VOLT_12_LOW        11.0
-#define USER_VOLT_5_LOW          4.0
-#define USER_VOLT_12_HIGH       12.5
-#define USER_VOLT_5_HIGH         5.5
+static constexpr float VOLTAGE_ABSENT        =  1.0;
+static constexpr float BATTERY_OVER_VOLT     = 16.8;   // TODO(tbaltovski): different for SLA vs Lithium
+static constexpr float BATTERY_CRITICAL_VOLT = 11.2;   // TODO(tbaltovski): different for SLA vs Lithium
+static constexpr float BATTERY_LOW_VOLT      = 12.0;   // TODO(tbaltovski): different for SLA vs Lithium
+static constexpr float USER_VOLT_12_LOW      = 11.0;
+static constexpr float USER_VOLT_5_LOW       =  4.0;
+static constexpr float USER_VOLT_12_HIGH     = 12.5;
+static constexpr float USER_VOLT_5_HIGH      =  5.5;
 
 // amperage warning levels
-#define CURRENT_DRAW_CRITICAL   32.0   // TODO(tbaltovski): check current thresholds
-#define CURRENT_DRAW_WARNING    20.0   // TODO(tbaltovski): check current thresholds
-#define CURRENT_DRAW_REMINDER   10.0   // TODO(tbaltovski): check current thresholds
+static constexpr float CURRENT_DRAW_CRITICAL = 32.0;   // TODO(tbaltovski): check current thresholds
+static constexpr float CURRENT_DRAW_WARNING  = 20.0;   // TODO(tbaltovski): check current thresholds
+static constexpr float CURRENT_DRAW_REMINDER = 10.0;   // TODO(tbaltovski): check current thresholds
 
 // temperature warnings for PCB & MCU
-#define TEMPERATURE_CRITICAL   100.0
-#define TEMPERATURE_WARNING     60.0
+static constexpr float TEMPERATURE_CRITICAL  =100.0;
+static constexpr float TEMPERATURE_WARNING   = 60.0;
 
 namespace dingo_base
 {
