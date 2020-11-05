@@ -61,6 +61,7 @@ public:
     Idle = 0,
     Driving,
     LowBattery,
+    OverVolt,
     NeedsReset,
     Fault,
     Stopped
@@ -135,6 +136,7 @@ private:
     LightsPatterns fault;
     LightsPatterns reset;
     LightsPatterns low_battery;
+    LightsPatterns over_volt;
     LightsPatterns driving;
     LightsPatterns idle;
   }

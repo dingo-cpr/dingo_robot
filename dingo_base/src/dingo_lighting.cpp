@@ -31,6 +31,7 @@
  */
 
 #include "dingo_base/dingo_lighting.h"
+#include "dingo_base/dingo_power_levels.h"
 #include <boost/assign/list_of.hpp>
 
 namespace dingo_base
@@ -92,6 +93,8 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_H)(Orange_H)(Orange_H)(Orange_H));
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_M)(Orange_M)(Orange_M)(Orange_M));
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_L)(Orange_L)(Orange_L)(Orange_L));
+
+  patterns_.over_volt.push_back(boost::assign::list_of(Blue_H)(Blue_H)(Blue_H)(Blue_H));
 
   patterns_.driving.push_back(boost::assign::list_of(Red_M)(White_M)(White_M)(Red_M));
 
@@ -195,9 +198,13 @@ void DingoLighting::updateState()
   {
     state_ = State::Fault;
   }
-  else if (mcu_status_msg_.measured_battery <= 12.0)   // TODO(tbaltovski): set based on SLA vs Lithium
+  else if (mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)  // TODO (civerachb) implement check for battery chemistry & handle lithium
   {
     state_ = State::LowBattery;
+  }
+  else if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT) // TODO (civerachb) implement check for battery chemistry & handle lithium
+  {
+    state_ = State::OverVolt;
   }
   else if (cmd_vel_msg_.linear.x != 0.0 ||
            cmd_vel_msg_.linear.y != 0.0 ||
@@ -247,6 +254,13 @@ void DingoLighting::updatePattern()
         current_pattern_count_ = 0;
       }
       memcpy(&current_pattern_, &patterns_.low_battery[current_pattern_count_], sizeof(current_pattern_));
+      break;
+    case State::OverVolt:
+      if (current_pattern_count_ >= patterns_.over_volt.size())
+      {
+        current_pattern_count_ = 0;
+      }
+      memcpy(&current_pattern_, &patterns_.over_volt[current_pattern_count_], sizeof(current_pattern_));
       break;
     case State::Driving:
       if (current_pattern_count_ >= patterns_.driving.size())
