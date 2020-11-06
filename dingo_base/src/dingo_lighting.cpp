@@ -72,7 +72,7 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
 
   user_cmds_sub_ = nh_->subscribe("cmd_lights", 1, &DingoLighting::userCmdCallback, this);
   mcu_status_sub_ = nh_->subscribe("mcu/status", 1, &DingoLighting::mcuStatusCallback, this);
-  battery_state_sub_ = nh_->subscribe("/battery/state", 1, &DingoLighting::batteryStateCallback, this);
+  battery_state_sub_ = nh_->subscribe("battery/state", 1, &DingoLighting::batteryStateCallback, this);
   puma_status_sub_ = nh_->subscribe("status", 1, &DingoLighting::pumaStatusCallback, this);
   cmd_vel_sub_ = nh_->subscribe("cmd_vel", 1, &DingoLighting::cmdVelCallback, this);
 
