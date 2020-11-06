@@ -59,8 +59,7 @@ DingoDiagnosticUpdater::DingoDiagnosticUpdater()
   status_sub_ = nh_.subscribe("mcu/status", 5, &DingoDiagnosticUpdater::statusCallback, this);
 
   // record the battery state
-  // TODO (civerachb) -- check the topic once we have access to an MCU for validation
-  battery_state_sub_ = nh_.subscribe("mcu/battery_state", 1, &DingoDiagnosticUpdater::batteryStateCallback, this);
+  battery_state_sub_ = nh_.subscribe("/battery/state", 1, &DingoDiagnosticUpdater::batteryStateCallback, this);
 
   // These message frequencies are reported on separately.
   ros::param::param("~expected_imu_frequency", expected_imu_frequency_, 50.0);
