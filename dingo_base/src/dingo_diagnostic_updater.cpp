@@ -58,6 +58,10 @@ DingoDiagnosticUpdater::DingoDiagnosticUpdater()
   // The arrival of this message runs the update() method and triggers the above callbacks.
   status_sub_ = nh_.subscribe("mcu/status", 5, &DingoDiagnosticUpdater::statusCallback, this);
 
+  // record the battery state
+  // TODO (civerachb) -- check the topic once we have access to an MCU for validation
+  battery_state_sub_ = nh_.subscribe("mcu/battery_state", 1, &DingoDiagnosticUpdater::batteryStateCallback, this);
+
   // These message frequencies are reported on separately.
   ros::param::param("~expected_imu_frequency", expected_imu_frequency_, 50.0);
   imu_diagnostic_ = new diagnostic_updater::TopicDiagnostic("/imu/data_raw", *this,
@@ -93,9 +97,10 @@ void DingoDiagnosticUpdater::batteryDiagnostics(diagnostic_updater::DiagnosticSt
 {
   stat.add("Battery Voltage (V)", last_status_->measured_battery);
 
-  if (true) // TODO (civerachb): handle the different battery chemistries
+  // if the battery technology is unknown, assume the battery is SLA, as otherwise it should report this!
+  if (last_battery_state_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN)
   {
-    if (last_status_->measured_battery > dingo_power::BATTERY_SLA_OVER_VOLT)
+    if (last_status_->measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT)
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery overvoltage.");
     }
@@ -103,40 +108,40 @@ void DingoDiagnosticUpdater::batteryDiagnostics(diagnostic_updater::DiagnosticSt
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery voltage not detected, check BATT fuse.");
     }
-    else if (last_status_->measured_battery < dingo_power::BATTERY_SLA_CRITICAL_VOLT)
+    else if (last_status_->measured_battery <= dingo_power::BATTERY_SLA_CRITICAL_VOLT)
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery critically under voltage.");
     }
-    else if (last_status_->measured_battery < dingo_power::BATTERY_SLA_LOW_VOLT)
+    else if (last_status_->measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Battery low voltage.");
     }
     else
     {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Battery OK.");
+      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Battery OK (SLA).");
     }
   }
   else
   {
-    if (last_status_->measured_battery > dingo_power::BATTERY_LITHIUM_OVER_VOLT)
+    if (last_battery_state_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT)
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery overvoltage.");
     }
-    else if (last_status_->measured_battery < dingo_power::VOLTAGE_ABSENT)
+    else if (last_battery_state_.voltage < dingo_power::VOLTAGE_ABSENT)
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery voltage not detected, check BATT fuse.");
     }
-    else if (last_status_->measured_battery < dingo_power::BATTERY_LITHIUM_CRITICAL_VOLT)
+    else if (last_battery_state_.percentage <= dingo_power::BATTERY_LITHIUM_CRITICAL_PERCENT)
     {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery critically under voltage.");
+      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery charge critically low.");
     }
-    else if (last_status_->measured_battery < dingo_power::BATTERY_LITHIUM_LOW_VOLT)
+    else if (last_battery_state_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT)
     {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Battery low voltage.");
+      stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Battery charge low.");
     }
     else
     {
-      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Battery OK.");
+      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Battery OK (Li).");
     }
   }
 }
@@ -241,6 +246,11 @@ void DingoDiagnosticUpdater::statusCallback(const dingo_msgs::Status::ConstPtr& 
   last_status_ = status;
   setHardwareID(hostname_ + '-' + last_status_->hardware_id);
   update();
+}
+
+void DingoDiagnosticUpdater::batteryStateCallback(const sensor_msgs::BatteryState::ConstPtr& battery_state)
+{
+  last_battery_state_ = *battery_state;
 }
 
 void DingoDiagnosticUpdater::imuCallback(const sensor_msgs::Imu::ConstPtr& msg)

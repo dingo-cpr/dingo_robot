@@ -72,6 +72,7 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
 
   user_cmds_sub_ = nh_->subscribe("cmd_lights", 1, &DingoLighting::userCmdCallback, this);
   mcu_status_sub_ = nh_->subscribe("mcu/status", 1, &DingoLighting::mcuStatusCallback, this);
+  battery_state_sub_ = nh_->subscribe("mcu/battery_state", 1, &DingoLighting::batteryStateCallback, this); // TODO (civerachb) -- check the topic once we have access to an MCU for validation
   puma_status_sub_ = nh_->subscribe("status", 1, &DingoLighting::pumaStatusCallback, this);
   cmd_vel_sub_ = nh_->subscribe("cmd_vel", 1, &DingoLighting::cmdVelCallback, this);
 
@@ -93,8 +94,6 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_H)(Orange_H)(Orange_H)(Orange_H));
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_M)(Orange_M)(Orange_M)(Orange_M));
   patterns_.low_battery.push_back(boost::assign::list_of(Orange_L)(Orange_L)(Orange_L)(Orange_L));
-
-  patterns_.over_volt.push_back(boost::assign::list_of(Blue_H)(Blue_H)(Blue_H)(Blue_H));
 
   patterns_.driving.push_back(boost::assign::list_of(Red_M)(White_M)(White_M)(Red_M));
 
@@ -129,6 +128,11 @@ void DingoLighting::userCmdCallback(const dingo_msgs::Lights::ConstPtr& lights_m
 void DingoLighting::mcuStatusCallback(const dingo_msgs::Status::ConstPtr& status_msg)
 {
   mcu_status_msg_ = *status_msg;
+}
+
+void DingoLighting::batteryStateCallback(const sensor_msgs::BatteryState::ConstPtr& battery_msg)
+{
+  battery_state_msg_ = *battery_msg;
 }
 
 void DingoLighting::pumaStatusCallback(const puma_motor_msgs::MultiStatus::ConstPtr& status_msg)
@@ -198,13 +202,25 @@ void DingoLighting::updateState()
   {
     state_ = State::Fault;
   }
-  else if (mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)  // TODO (civerachb) implement check for battery chemistry & handle lithium
+  else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )          // SLA battery & voltage is low
   {
     state_ = State::LowBattery;
   }
-  else if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT) // TODO (civerachb) implement check for battery chemistry & handle lithium
+  else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT )         // SLA battery & voltage over-volting
   {
-    state_ = State::OverVolt;
+    state_ = State::Fault;
+  }
+  else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT )      // Li battery & remaining charge is low
+  {
+    state_ = State::LowBattery;
+  }
+  else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )            // Li battery & voltage over-volting
+  {
+    state_ = State::Fault;
   }
   else if (cmd_vel_msg_.linear.x != 0.0 ||
            cmd_vel_msg_.linear.y != 0.0 ||
@@ -254,13 +270,6 @@ void DingoLighting::updatePattern()
         current_pattern_count_ = 0;
       }
       memcpy(&current_pattern_, &patterns_.low_battery[current_pattern_count_], sizeof(current_pattern_));
-      break;
-    case State::OverVolt:
-      if (current_pattern_count_ >= patterns_.over_volt.size())
-      {
-        current_pattern_count_ = 0;
-      }
-      memcpy(&current_pattern_, &patterns_.over_volt[current_pattern_count_], sizeof(current_pattern_));
       break;
     case State::Driving:
       if (current_pattern_count_ >= patterns_.driving.size())

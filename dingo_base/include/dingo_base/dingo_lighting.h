@@ -40,6 +40,7 @@
 #include "geometry_msgs/Twist.h"
 #include "dingo_msgs/Lights.h"
 #include "dingo_msgs/Status.h"
+#include "sensor_msgs/BatteryState.h"
 #include "puma_motor_msgs/MultiStatus.h"
 
 namespace dingo_base
@@ -61,7 +62,6 @@ public:
     Idle = 0,
     Driving,
     LowBattery,
-    OverVolt,
     NeedsReset,
     Fault,
     Stopped
@@ -86,6 +86,9 @@ private:
   /** Used to subscribe to MCU status */
   ros::Subscriber mcu_status_sub_;
 
+  /** Used to subscrube to battery state */
+  ros::Subscriber battery_state_sub_;
+
   /** Used to subscribe to Puma motor controller status */
   ros::Subscriber puma_status_sub_;
 
@@ -97,6 +100,9 @@ private:
 
   /** The last received MCU status message */
   dingo_msgs::Status mcu_status_msg_;
+
+  /** The last received battery state message */
+  sensor_msgs::BatteryState battery_state_msg_;
 
   /** The last received velocity command */
   geometry_msgs::Twist cmd_vel_msg_;
@@ -136,7 +142,6 @@ private:
     LightsPatterns fault;
     LightsPatterns reset;
     LightsPatterns low_battery;
-    LightsPatterns over_volt;
     LightsPatterns driving;
     LightsPatterns idle;
   }
@@ -170,6 +175,11 @@ private:
    *  @param[in] status_msg The status message to be stored
    */
   void mcuStatusCallback(const dingo_msgs::Status::ConstPtr& status_msg);
+
+  /** Called when a battery state message is received, for state updates.
+   *  @param[in] battery_msg The battery-state message to be stored
+   */
+  void batteryStateCallback(const sensor_msgs::BatteryState::ConstPtr& battery_msg);
 
   /** Called when a velocity command is received, for state updates.
    *  @param[in] msg The velocity command to be stored
