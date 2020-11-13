@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2020-11-13)
+------------------
 * Bump CMake version to avoid CMP0048 warning.
 * [dingo_bringup] Increased CAN TX queue size.
 * Merge pull request `#1 <https://github.com/dingo-cpr/dingo_robot/issues/1>`_ from dingo-cpr/rs-l515-update

@@ -2,8 +2,8 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2020-11-13)
+------------------
 * Bump CMake version to avoid CMP0048 warning.
 * [dingo_base] Reduced log spamming.
 * [dingo_base] Fixed not using function for ros::ok().
