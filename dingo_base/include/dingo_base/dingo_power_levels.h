@@ -43,6 +43,8 @@ public:
   static constexpr float VOLTAGE_ABSENT                =  1.0;
 
   // Lithium battery warning levels
+  // TODO (civerachb) -- All lithium battery-related code is currently untested, as the hardware to test it on
+  // doesn't exist yet!  We'll make any necessary changes to lithium battery support at a later date
   static constexpr float BATTERY_LITHIUM_OVER_VOLT     = 16.9;
   static constexpr float BATTERY_LITHIUM_LOW_VOLT      = 12.0;
   static constexpr float BATTERY_LITHIUM_CRITICAL_VOLT = 11.2;
