@@ -150,16 +150,19 @@ void DingoDiagnosticUpdater::voltageDiagnostics(diagnostic_updater::DiagnosticSt
   stat.add("12V Supply (V)", last_status_->measured_12v);
   stat.add("5V Supply (V)", last_status_->measured_5v);
 
-  if (last_status_->measured_12v > dingo_power::USER_VOLT_12_HIGH || last_status_->measured_5v > dingo_power::USER_VOLT_5_HIGH)
+  if (last_status_->measured_12v > dingo_power::USER_VOLT_12_HIGH ||
+      last_status_->measured_5v > dingo_power::USER_VOLT_5_HIGH)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR,
         "User supply overvoltage. Accessories may be damaged.");
   }
-  else if (last_status_->measured_12v < dingo_power::VOLTAGE_ABSENT || last_status_->measured_5v < dingo_power::VOLTAGE_ABSENT)
+  else if (last_status_->measured_12v < dingo_power::VOLTAGE_ABSENT ||
+           last_status_->measured_5v < dingo_power::VOLTAGE_ABSENT)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "User supplies absent. Check tray fuses.");
   }
-  else if (last_status_->measured_12v < dingo_power::USER_VOLT_12_LOW || last_status_->measured_5v < dingo_power::USER_VOLT_5_LOW)
+  else if (last_status_->measured_12v < dingo_power::USER_VOLT_12_LOW ||
+           last_status_->measured_5v < dingo_power::USER_VOLT_5_LOW)
   {
     stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Voltage supplies undervoltage. Check loading levels.");
   }

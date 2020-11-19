@@ -36,20 +36,20 @@
 /**
  * Container for defining voltage & amperage warning levels for the Dingo-D and Dingo-O
  */
-class dingo_power {
+class dingo_power
+{
 public:
-
   // battery voltage warning levels
   static constexpr float VOLTAGE_ABSENT                =  1.0;
 
   // Lithium battery warning levels
-  // TODO (civerachb) -- All lithium battery-related code is currently untested, as the hardware to test it on
+  // TODO(civerachb) -- All lithium battery-related code is currently untested, as the hardware to test it on
   // doesn't exist yet!  We'll make any necessary changes to lithium battery support at a later date
   static constexpr float BATTERY_LITHIUM_OVER_VOLT     = 16.9;
   static constexpr float BATTERY_LITHIUM_LOW_VOLT      = 12.0;
   static constexpr float BATTERY_LITHIUM_CRITICAL_VOLT = 11.2;
-  static constexpr float BATTERY_LITHIUM_LOW_PERCENT   =  0.10;    // 0-1 TODO (civerachb) -- test this out on an actual Li battery & adjust
-  static constexpr float BATTERY_LITHIUM_CRITICAL_PERCENT = 0.05;  // 0-1 TODO (civerachb) -- test this out on an actual Li battery & adjust
+  static constexpr float BATTERY_LITHIUM_LOW_PERCENT   =  0.10;    // 0-1 TODO(civerachb) -- test this out on an actual Li battery & adjust
+  static constexpr float BATTERY_LITHIUM_CRITICAL_PERCENT = 0.05;  // 0-1 TODO(civerachb) -- test this out on an actual Li battery & adjust
 
   // SLA battery warning levels
   static constexpr float BATTERY_SLA_OVER_VOLT         = 13.6;
@@ -68,7 +68,7 @@ public:
   static constexpr float CURRENT_DRAW_REMINDER         =  8.0;
 
   // temperature warnings for PCB & MCU
-  static constexpr float TEMPERATURE_CRITICAL          =100.0;
-  static constexpr float TEMPERATURE_WARNING           = 60.0;
+  static constexpr float TEMPERATURE_CRITICAL          = 100.0;
+  static constexpr float TEMPERATURE_WARNING           =  60.0;
 };
-#endif
+#endif  // DINGO_BASE_DINGO_POWER_LEVELS_H

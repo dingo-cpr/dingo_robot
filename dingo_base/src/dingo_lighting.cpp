@@ -203,22 +203,22 @@ void DingoLighting::updateState()
     state_ = State::Fault;
   }
   else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )          // SLA battery & voltage is low
+           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )  // SLA battery & voltage is low
   {
     state_ = State::LowBattery;
   }
   else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT )         // SLA battery & voltage over-volting
+           mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT )  // SLA battery & voltage over-volt
   {
     state_ = State::Fault;
   }
   else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT )      // Li battery & remaining charge is low
+           battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT )  // Li battery & charge is low
   {
     state_ = State::LowBattery;
   }
   else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )            // Li battery & voltage over-volting
+           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )  // Li battery & voltage over-volt
   {
     state_ = State::Fault;
   }
