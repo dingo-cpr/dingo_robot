@@ -2,6 +2,11 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added missing test dependencies.
+* Contributors: Tony Baltovski
+
 0.1.0 (2020-11-13)
 ------------------
 * Bump CMake version to avoid CMP0048 warning.
