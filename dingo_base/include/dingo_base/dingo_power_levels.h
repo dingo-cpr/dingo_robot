@@ -48,8 +48,10 @@ public:
   static constexpr float BATTERY_LITHIUM_OVER_VOLT     = 16.9;
   static constexpr float BATTERY_LITHIUM_LOW_VOLT      = 12.0;
   static constexpr float BATTERY_LITHIUM_CRITICAL_VOLT = 11.2;
-  static constexpr float BATTERY_LITHIUM_LOW_PERCENT   =  0.20;    // 0-1 TODO(civerachb) -- test this out on an actual Li battery & adjust
-  static constexpr float BATTERY_LITHIUM_CRITICAL_PERCENT = 0.10;  // 0-1 TODO(civerachb) -- test this out on an actual Li battery & adjust
+  // TODO(civerachb) -- test this out on an actual Li battery & adjust
+  static constexpr float BATTERY_LITHIUM_LOW_PERCENT   =  0.20;    // 0-1
+  // TODO(civerachb) -- test this out on an actual Li battery & adjust
+  static constexpr float BATTERY_LITHIUM_CRITICAL_PERCENT = 0.10;  // 0-1
 
   // SLA battery warning levels
   static constexpr float BATTERY_SLA_OVER_VOLT         = 13.6;
