@@ -36,6 +36,9 @@
   <exec_depend>tf</exec_depend>
   <exec_depend>topic_tools</exec_depend>
 
+  <test_depend>roslaunch</test_depend>
+  <test_depend>roslint</test_depend>
+
   <export>
   </export>
 </package>
