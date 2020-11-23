@@ -40,6 +40,7 @@
 #include "geometry_msgs/Twist.h"
 #include "dingo_msgs/Lights.h"
 #include "dingo_msgs/Status.h"
+#include "dingo_base/value_aggregator.h"
 #include "sensor_msgs/BatteryState.h"
 #include "puma_motor_msgs/MultiStatus.h"
 
