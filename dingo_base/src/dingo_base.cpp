@@ -60,7 +60,7 @@ void control(ros::Rate rate, dingo_base::DingoHardware* robot, controller_manage
 {
   std::chrono::steady_clock::time_point last_time = std::chrono::steady_clock::now();
 
-  while (ros::ok)
+  while (ros::ok())
   {
     // Calculate monotonic time elapsed
     std::chrono::steady_clock::time_point this_time = std::chrono::steady_clock::now();
@@ -100,7 +100,7 @@ void control(ros::Rate rate, dingo_base::DingoHardware* robot, controller_manage
  */
 void canRead(ros::Rate rate, dingo_base::DingoHardware* robot)
 {
-  while (ros::ok)
+  while (ros::ok())
   {
     robot->canRead();
     rate.sleep();

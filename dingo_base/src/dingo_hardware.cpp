@@ -165,19 +165,16 @@ bool DingoHardware::isActive()
   {
     active_ = true;
     multi_driver_node_->activePublishers(active_);
+    ROS_INFO("Dingo Hardware Active");
   }
   else if (!this->areAllDriversActive() && active_ == true)
   {
     active_ = false;
   }
 
-  if (active_)
+  if (!active_)
   {
-    ROS_INFO_THROTTLE(60, "Dingo Hardware Active.");
-  }
-  else
-  {
-    ROS_WARN_THROTTLE(60, "Dingo Hardware Inactive.");
+    ROS_WARN_THROTTLE(60, "Dingo Hardware Inactive");
   }
 
   return active_;

@@ -159,22 +159,5 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
       <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
       <arg name="allow_no_texture_points"  value="$(arg allow_no_texture_points)"/>
     </include>
-
-    <!--
-      Work-around for the L515 not publishing point-cloud data correctly
-      This will convert the raw depth image into a colourless pointcloud2, which is better than nothing.
-      Unfortunately the point_cloud_xyzrgb nodelet doesn't seem work with the L515 data
-    -->
-    <group if="$(eval optenv('DINGO_REALSENSE_MODEL', 'd435') == 'l515')">
-      <node pkg="nodelet" type="nodelet" args="manager"
-          name="l515_manager" output="screen"/>
-
-      <node pkg="nodelet" type="nodelet" name="l515_pointcloud"
-            args="load depth_image_proc/point_cloud_xyz l515_manager --no-bond">
-        <remap from="/camera_info" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/camera_info" />
-        <remap from="/image_rect" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/image_rect_raw" />
-        <remap from="/points" to="$(optenv DINGO_REALSENSE_TOPIC realsense)/depth/color/points" />
-      </node>
-    </group>
   </group>
 </launch>
