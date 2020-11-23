@@ -20,7 +20,8 @@ add_executable(dingo_node
   src/dingo_diagnostic_updater.cpp
   src/dingo_hardware.cpp
   src/dingo_lighting.cpp
-  src/dingo_logger.cpp)
+  src/dingo_logger.cpp
+  src/value_aggregator.cpp)
 target_link_libraries(dingo_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_dependencies(dingo_node ${catkin_EXPORTED_TARGETS})
 

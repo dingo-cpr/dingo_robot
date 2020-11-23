@@ -44,8 +44,8 @@ namespace dingo_base
 {
 
 DingoDiagnosticUpdater::DingoDiagnosticUpdater() :
-  measured_voltage_battery_(),
-  avg_voltage_battery_(0)
+  // keep a rolling average of the last 30s worth of battery voltage readings
+  battery_voltage_aggregator_(dingo_power::READINGS_PER_SECOND * 30)
 {
   setHardwareID("unknown");
   gethostname(hostname_, 1024);
@@ -96,27 +96,24 @@ void DingoDiagnosticUpdater::generalDiagnostics(diagnostic_updater::DiagnosticSt
 
 void DingoDiagnosticUpdater::batteryDiagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
-  measured_voltage_battery_.push_back(last_status_->measured_battery);
-  if (measured_voltage_battery_.size() > AVERAGE_VOLTAGE_WINDOW_SIZE)
-    measured_voltage_battery_.pop_front();
-  avg_voltage_battery_ = average_voltage(measured_voltage_battery_);
-
   // if the battery technology is unknown, assume the battery is SLA, as otherwise it should report this!
   if (last_battery_state_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN)
   {
-    if (last_status_->measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT)
+    battery_voltage_aggregator_.add_sample(last_status_->measured_battery);
+
+    if (battery_voltage_aggregator_.latest() >= dingo_power::BATTERY_SLA_OVER_VOLT)  //check instantaneous readings
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery overvoltage.");
     }
-    else if (last_status_->measured_battery < dingo_power::VOLTAGE_ABSENT)
+    else if (battery_voltage_aggregator_.latest() < dingo_power::VOLTAGE_ABSENT)  // check instantaneous readings
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery voltage not detected, check BATT fuse.");
     }
-    else if (last_status_->measured_battery <= dingo_power::BATTERY_SLA_CRITICAL_VOLT)
+    else if (battery_voltage_aggregator_.median() <= dingo_power::BATTERY_SLA_CRITICAL_VOLT)  // check rolling-average
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery critically under voltage.");
     }
-    else if (last_status_->measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)
+    else if (battery_voltage_aggregator_.median() <= dingo_power::BATTERY_SLA_LOW_VOLT)  // check rolling-average
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Battery low voltage.");
     }
@@ -298,32 +295,6 @@ void DingoDiagnosticUpdater::wirelessMonitorCallback(const ros::TimerEvent& te)
   // Free structure, publish result message.
   freeifaddrs(ifa_head);
   wifi_connected_pub_.publish(wifi_connected_msg);
-}
-
-double DingoDiagnosticUpdater::average_voltage(const std::list<double> &measurements)
-{
-#if 1
-  // calculate the median of the measurements
-  // this should be less-sensitive to spikes in the draw
-  if (measurements.size() > 0)
-  {
-    std::vector<double> cpy(measurements.size());
-    std::for_each(measurements.begin(), measurements.end(), [&](const double &x){
-      cpy.push_back(x);
-    });
-    std::sort(cpy.begin(), cpy.end());
-    return cpy[cpy.size()/2];
-  }
-  else
-    return 0.0;
-#else
-  // calculate the average of the measurements
-  double total = 0.0;
-  std::for_each(measurements.begin(), measurements.end(), [&](const double &x) {
-    total += x;
-  });
-  return total / measurements.size();
-#endif
 }
 
 }  // namespace dingo_base

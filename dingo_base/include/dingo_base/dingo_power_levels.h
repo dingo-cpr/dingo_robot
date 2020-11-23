@@ -39,6 +39,9 @@
 class dingo_power
 {
 public:
+  // how many samples per second do we get from the battery?
+  static const int READINGS_PER_SECOND                 = 1;
+
   // battery voltage warning levels
   static constexpr float VOLTAGE_ABSENT                =  1.0;
 

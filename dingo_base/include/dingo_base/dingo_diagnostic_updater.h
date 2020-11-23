@@ -36,7 +36,6 @@
 #define AVERAGE_VOLTAGE_WINDOW_SIZE 30
 
 #include <string>
-#include <list>
 
 #include "ros/ros.h"
 #include "std_msgs/Bool.h"
@@ -45,6 +44,7 @@
 #include "diagnostic_updater/diagnostic_updater.h"
 #include "diagnostic_updater/publisher.h"
 #include "dingo_msgs/Status.h"
+#include "dingo_base/value_aggregator.h"
 
 namespace dingo_base
 {
@@ -142,18 +142,7 @@ private:
   /** Used to publish wifi connectivity updates */
   ros::Publisher wifi_connected_pub_;
 
-  /** used to measure the last 30s worth of battery measurements so we can average them **/
-  std::list<double> measured_voltage_battery_;
-
-  /** The rolling average of the battery measurements **/
-  double avg_voltage_battery_;
-
-  /**
-   * Averages the values saved in a queue and returns the result
-   * @param[measurements] The queue we're averaging
-   * @return The average of all the values in the queue
-   **/
-  double average_voltage(const std::list<double> &measurements);
+  ValueAggregator battery_voltage_aggregator_;
 };
 
 }  // namespace dingo_base

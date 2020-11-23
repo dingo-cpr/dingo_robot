@@ -40,6 +40,7 @@
 #include "geometry_msgs/Twist.h"
 #include "dingo_msgs/Lights.h"
 #include "dingo_msgs/Status.h"
+#include "dingo_base/value_aggregator.h"
 #include "sensor_msgs/BatteryState.h"
 #include "puma_motor_msgs/MultiStatus.h"
 
@@ -103,6 +104,13 @@ private:
 
   /** The last received battery state message */
   sensor_msgs::BatteryState battery_state_msg_;
+
+  /** 
+   * Averages the last 30s worth of battery data to prevent false-positives
+   * when checking for low-voltage alerts.
+   * SLA batteries are especially vulnerable to this
+   **/
+  ValueAggregator battery_voltage_aggregator_;
 
   /** The last received velocity command */
   geometry_msgs::Twist cmd_vel_msg_;
