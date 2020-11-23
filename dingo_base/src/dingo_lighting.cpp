@@ -31,6 +31,7 @@
  */
 
 #include "dingo_base/dingo_lighting.h"
+#include "dingo_base/dingo_power_levels.h"
 #include <boost/assign/list_of.hpp>
 
 namespace dingo_base
@@ -71,6 +72,7 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
 
   user_cmds_sub_ = nh_->subscribe("cmd_lights", 1, &DingoLighting::userCmdCallback, this);
   mcu_status_sub_ = nh_->subscribe("mcu/status", 1, &DingoLighting::mcuStatusCallback, this);
+  battery_state_sub_ = nh_->subscribe("battery/state", 1, &DingoLighting::batteryStateCallback, this);
   puma_status_sub_ = nh_->subscribe("status", 1, &DingoLighting::pumaStatusCallback, this);
   cmd_vel_sub_ = nh_->subscribe("cmd_vel", 1, &DingoLighting::cmdVelCallback, this);
 
@@ -126,6 +128,11 @@ void DingoLighting::userCmdCallback(const dingo_msgs::Lights::ConstPtr& lights_m
 void DingoLighting::mcuStatusCallback(const dingo_msgs::Status::ConstPtr& status_msg)
 {
   mcu_status_msg_ = *status_msg;
+}
+
+void DingoLighting::batteryStateCallback(const sensor_msgs::BatteryState::ConstPtr& battery_msg)
+{
+  battery_state_msg_ = *battery_msg;
 }
 
 void DingoLighting::pumaStatusCallback(const puma_motor_msgs::MultiStatus::ConstPtr& status_msg)
@@ -195,9 +202,25 @@ void DingoLighting::updateState()
   {
     state_ = State::Fault;
   }
-  else if (mcu_status_msg_.measured_battery <= 12.0)   // TODO(tbaltovski): set based on SLA vs Lithium
+  else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )  // SLA battery & voltage is low
   {
     state_ = State::LowBattery;
+  }
+  else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT )  // SLA battery & voltage over-volt
+  {
+    state_ = State::Fault;
+  }
+  else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT )  // Li battery & charge is low
+  {
+    state_ = State::LowBattery;
+  }
+  else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )  // Li battery & voltage over-volt
+  {
+    state_ = State::Fault;
   }
   else if (cmd_vel_msg_.linear.x != 0.0 ||
            cmd_vel_msg_.linear.y != 0.0 ||

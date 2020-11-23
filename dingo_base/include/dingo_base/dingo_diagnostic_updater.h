@@ -40,6 +40,7 @@
 
 #include "ros/ros.h"
 #include "std_msgs/Bool.h"
+#include "sensor_msgs/BatteryState.h"
 #include "sensor_msgs/Imu.h"
 #include "diagnostic_updater/diagnostic_updater.h"
 #include "diagnostic_updater/publisher.h"
@@ -89,6 +90,11 @@ public:
    */
   void statusCallback(const dingo_msgs::Status::ConstPtr& status);
 
+  /** Callback that is run when a battery state message is received
+   *  @param[in] battery_state Contents of battery state message
+   */
+  void batteryStateCallback(const sensor_msgs::BatteryState::ConstPtr& battery_state);
+
   /** Callback that is run when an IMU message is received
    *  @param[in] msg Contents of IMU message
    */
@@ -106,8 +112,14 @@ private:
   /** Used to subscribe for MCU status messages */
   ros::Subscriber status_sub_;
 
+  /** Used to subscribe for battery state messages */
+  ros::Subscriber battery_state_sub_;
+
   /** Last MCU status message */
   dingo_msgs::Status::ConstPtr last_status_;
+
+  /** Last battery state message */
+  sensor_msgs::BatteryState last_battery_state_;
 
   /** Frequency, in Hz, at which IMU updates are expected */
   double expected_imu_frequency_;
