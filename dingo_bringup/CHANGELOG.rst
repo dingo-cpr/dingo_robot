@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.1 (2020-11-23)
+------------------
 * Added missing test dependencies.
 * Contributors: Tony Baltovski
 

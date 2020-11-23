@@ -2,8 +2,8 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.1 (2020-11-23)
+------------------
 * Added missing test dependencies.
 * Roslint fixes
 * Diagnostics update (`#2 <https://github.com/dingo-cpr/dingo_robot/issues/2>`_)
