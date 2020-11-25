@@ -11,6 +11,8 @@ main_job.add(package="dingo_base", filename="launch/base.launch")
 main_job.add(package="dingo_bringup", filename="launch/accessories.launch")
 main_job.install()
 
+# Wait to for can-udp-bridge to be up before starting ROS
+os.system("sudo  sed -i '/After/c After=can-udp-bridge.service' /lib/systemd/system/ros.service")
 
 class DingoExtras(robot_upstart.providers.Generic):
     def post_install(self):
