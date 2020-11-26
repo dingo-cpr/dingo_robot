@@ -2,6 +2,11 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [dingo_base] Fixed battery topic.
+* Contributors: Tony Baltovski
+
 0.1.1 (2020-11-23)
 ------------------
 * Added missing test dependencies.

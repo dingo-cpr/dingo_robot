@@ -2,6 +2,11 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [dingo_bringup] Made ros service start after can-udp-bridge service.
+* Contributors: Tony Baltovski
+
 0.1.1 (2020-11-23)
 ------------------
 * Added missing test dependencies.
