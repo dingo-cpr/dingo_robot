@@ -2,8 +2,8 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.2 (2020-11-26)
+------------------
 * [dingo_base] Fixed battery topic.
 * Contributors: Tony Baltovski
 
