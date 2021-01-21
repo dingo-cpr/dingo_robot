@@ -11,6 +11,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     DINGO_LASER_MODEL environment variable. Valid model designations are:
     - lms1xx (default) :: SICK LMS1xx
     - ust10            :: Hokuyo UST10
+    - vlp16            :: Velodyne VLP-16
   -->
   <group if="$(optenv DINGO_LASER 0)">
     <arg name="lidar_model" value="$(optenv DINGO_LASER_MODEL lms1xx)" />
