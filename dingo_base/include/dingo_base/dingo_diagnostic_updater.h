@@ -33,6 +33,8 @@
 #ifndef DINGO_BASE_DINGO_DIAGNOSTIC_UPDATER_H
 #define DINGO_BASE_DINGO_DIAGNOSTIC_UPDATER_H
 
+#define AVERAGE_VOLTAGE_WINDOW_SIZE 30
+
 #include <string>
 
 #include "ros/ros.h"
@@ -42,6 +44,7 @@
 #include "diagnostic_updater/diagnostic_updater.h"
 #include "diagnostic_updater/publisher.h"
 #include "dingo_msgs/Status.h"
+#include "dingo_base/value_aggregator.h"
 
 namespace dingo_base
 {
@@ -138,6 +141,8 @@ private:
 
   /** Used to publish wifi connectivity updates */
   ros::Publisher wifi_connected_pub_;
+
+  ValueAggregator battery_voltage_aggregator_;
 };
 
 }  // namespace dingo_base

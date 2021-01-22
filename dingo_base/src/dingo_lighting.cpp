@@ -66,7 +66,8 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   allow_user_(false),
   user_publishing_(false),
   state_(State::Idle),
-  current_pattern_count_(0)
+  current_pattern_count_(0),
+  battery_voltage_aggregator_(dingo_power::READINGS_PER_SECOND * 30)
 {
   lights_pub_ = nh_->advertise<dingo_msgs::Lights>("mcu/cmd_lights", 1);
 
@@ -180,6 +181,8 @@ void DingoLighting::userTimeoutCallback(const ros::TimerEvent&)
 
 void DingoLighting::updateState()
 {
+  battery_voltage_aggregator_.add_sample(mcu_status_msg_.measured_battery);
+
   if (mcu_status_msg_.stop_engaged == true)
   {
     state_ = State::Stopped;
@@ -203,12 +206,12 @@ void DingoLighting::updateState()
     state_ = State::Fault;
   }
   else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )  // SLA battery & voltage is low
+           battery_voltage_aggregator_.median() <= dingo_power::BATTERY_SLA_LOW_VOLT )  // SLA battery & voltage is low
   {
     state_ = State::LowBattery;
   }
   else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT )  // SLA battery & voltage over-volt
+           battery_voltage_aggregator_.latest() >= dingo_power::BATTERY_SLA_OVER_VOLT )  // SLA battery & voltage high
   {
     state_ = State::Fault;
   }
@@ -218,7 +221,7 @@ void DingoLighting::updateState()
     state_ = State::LowBattery;
   }
   else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )  // Li battery & voltage over-volt
+           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )  // Li battery & voltage high
   {
     state_ = State::Fault;
   }

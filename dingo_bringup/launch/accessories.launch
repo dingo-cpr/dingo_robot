@@ -11,6 +11,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     DINGO_LASER_MODEL environment variable. Valid model designations are:
     - lms1xx (default) :: SICK LMS1xx
     - ust10            :: Hokuyo UST10
+    - vlp16            :: Velodyne VLP-16
   -->
   <group if="$(optenv DINGO_LASER 0)">
     <arg name="lidar_model" value="$(optenv DINGO_LASER_MODEL lms1xx)" />
@@ -31,6 +32,14 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
         <param name="frame_id" value="$(optenv DINGO_LASER_MOUNT front)_laser" />
         <remap from="scan" to="$(optenv DINGO_LASER_TOPIC front/scan)" />
       </node>
+    </group>
+
+    <!-- VLP16 node -->
+    <group if="$(eval arg('lidar_model') == 'vlp16')">
+      <include file="$(find velodyne_pointcloud)/launch/VLP-16.launch">
+        <arg name="device_ip" value="$(optenv DINGO_LASER_HOST 192.168.131.20)" />
+        <remap from="velodyne_points" to="$(optenv DINGO_LASER_TOPIC front/points)" />
+      </include>
     </group>
   </group>
 

@@ -43,7 +43,9 @@
 namespace dingo_base
 {
 
-DingoDiagnosticUpdater::DingoDiagnosticUpdater()
+DingoDiagnosticUpdater::DingoDiagnosticUpdater() :
+  // keep a rolling average of the last 30s worth of battery voltage readings
+  battery_voltage_aggregator_(dingo_power::READINGS_PER_SECOND * 30)
 {
   setHardwareID("unknown");
   gethostname(hostname_, 1024);
@@ -94,24 +96,24 @@ void DingoDiagnosticUpdater::generalDiagnostics(diagnostic_updater::DiagnosticSt
 
 void DingoDiagnosticUpdater::batteryDiagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat)
 {
-  stat.add("Battery Voltage (V)", last_status_->measured_battery);
-
   // if the battery technology is unknown, assume the battery is SLA, as otherwise it should report this!
   if (last_battery_state_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN)
   {
-    if (last_status_->measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT)
+    battery_voltage_aggregator_.add_sample(last_status_->measured_battery);
+
+    if (battery_voltage_aggregator_.latest() >= dingo_power::BATTERY_SLA_OVER_VOLT)  //check instantaneous readings
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery overvoltage.");
     }
-    else if (last_status_->measured_battery < dingo_power::VOLTAGE_ABSENT)
+    else if (battery_voltage_aggregator_.latest() < dingo_power::VOLTAGE_ABSENT)  // check instantaneous readings
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery voltage not detected, check BATT fuse.");
     }
-    else if (last_status_->measured_battery <= dingo_power::BATTERY_SLA_CRITICAL_VOLT)
+    else if (battery_voltage_aggregator_.median() <= dingo_power::BATTERY_SLA_CRITICAL_VOLT)  // check rolling-average
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Battery critically under voltage.");
     }
-    else if (last_status_->measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)
+    else if (battery_voltage_aggregator_.median() <= dingo_power::BATTERY_SLA_LOW_VOLT)  // check rolling-average
     {
       stat.summary(diagnostic_msgs::DiagnosticStatus::WARN, "Battery low voltage.");
     }
