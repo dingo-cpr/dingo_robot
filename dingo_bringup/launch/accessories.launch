@@ -11,7 +11,6 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     DINGO_LASER_MODEL environment variable. Valid model designations are:
     - lms1xx (default) :: SICK LMS1xx
     - ust10            :: Hokuyo UST10
-    - vlp16            :: Velodyne VLP-16
   -->
   <group if="$(optenv DINGO_LASER 0)">
     <arg name="lidar_model" value="$(optenv DINGO_LASER_MODEL lms1xx)" />
@@ -33,12 +32,48 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
         <remap from="scan" to="$(optenv DINGO_LASER_TOPIC front/scan)" />
       </node>
     </group>
+  </group>
+
+  <!--
+    Secondary 2D laser
+    Same config options as above, but with "_SECONDARY" in all env vars
+  -->
+  <group if="$(optenv DINGO_LASER_SECONDARY 0)">
+    <arg name="lidar2_model" value="$(optenv DINGO_LASER_SECONDARY_MODEL lms1xx)" />
+
+    <!-- LMS1xx node -->
+    <group if="$(eval arg('lidar2_model') == 'lms1xx')">
+      <node pkg="lms1xx" name="lms1xx" type="LMS1xx_node">
+        <param name="host" value="$(optenv DINGO_LASER_SECONDARY_HOST 192.168.131.21)" />
+        <param name="frame_id" value="$(optenv DINGO_LASER_SECONDARY_MOUNT rear)_laser" />
+        <remap from="scan" to="$(optenv DINGO_LASER_SECONDARY_TOPIC rear/scan)" />
+      </node>
+    </group>
+
+    <!-- UST10 node -->
+    <group if="$(eval arg('lidar2_model') == 'ust10')">
+      <node pkg="urg_node" name="hokuyo" type="urg_node">
+        <param name="ip_address" value="$(optenv DINGO_LASER_SECONDARY_HOST 192.168.131.21)" />
+        <param name="frame_id" value="$(optenv DINGO_LASER_SECONDARY_MOUNT rear)_laser" />
+        <remap from="scan" to="$(optenv DINGO_LASER_SECONDARY_TOPIC rear/scan)" />
+      </node>
+    </group>
+  </group>
+
+  <!--
+    Primary 3D laser
+    By default this is a Velodyne VLP16 but can be changed with the
+    DINGO_LASER_3D_MODEL environment variable. Valid model designations are:
+    - vlp16 (default)     :: Velodyne VLP-16
+  -->
+  <group if="$(optenv DINGO_LASER_3D 0)">
+    <arg name="lidar_3d_model" value="$(optenv DINGO_LASER_3D_MODEL vlp16)" />
 
     <!-- VLP16 node -->
-    <group if="$(eval arg('lidar_model') == 'vlp16')">
+    <group if="$(eval arg('lidar_3d_model') == 'vlp16')">
       <include file="$(find velodyne_pointcloud)/launch/VLP-16.launch">
-        <arg name="device_ip" value="$(optenv DINGO_LASER_HOST 192.168.131.20)" />
-        <remap from="velodyne_points" to="$(optenv DINGO_LASER_TOPIC front/points)" />
+        <arg name="device_ip" value="$(optenv DINGO_LASER_3D_HOST 192.168.131.20)" />
+        <remap from="velodyne_points" to="$(optenv DINGO_LASER_3D_TOPIC front/points)" />
       </include>
     </group>
   </group>
