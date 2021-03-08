@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.3 (2021-03-08)
+------------------
 * Move the VLP16 to a new DINGO_LASER_3D family of vars, add DINGO_LASER_SECONDARY
 * Add vlp16 to the commend block explaining allowed values
 * Add support for the VLP16 as a standard laser sensor for Dingo
