@@ -1,23 +1,36 @@
-cmake_minimum_required(VERSION 3.0.2)
+################################################################################
+# Set minimum required version of cmake, project name and compile options
+################################################################################
+cmake_minimum_required(VERSION 3.5)
 project(dingo_bringup)
 
-find_package(catkin REQUIRED)
+################################################################################
+# Find ament packages and libraries for ament and system dependencies
+################################################################################
+find_package(ament_cmake REQUIRED)
 
-catkin_package()
-
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+################################################################################
+# Install
+################################################################################
+install(
+	DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
-install(FILES scripts/can-udp-bridge.conf scripts/can-udp-bridge.sh
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# install(FILES scripts/can-udp-bridge.conf scripts/can-udp-bridge.sh
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
-install(PROGRAMS scripts/install scripts/set-dingo-o
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(PROGRAMS scripts/install scripts/set-dingo-o
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
-if (CATKIN_ENABLE_TESTING)
-  find_package(roslaunch REQUIRED)
-  roslaunch_add_file_check(launch/accessories.launch)
-endif()
+# if (CATKIN_ENABLE_TESTING)
+#   find_package(roslaunch REQUIRED)
+#   roslaunch_add_file_check(launch/accessories.launch)
+# endif()
+
+################################################################################
+# Macro for ament package
+################################################################################
+ament_package()
