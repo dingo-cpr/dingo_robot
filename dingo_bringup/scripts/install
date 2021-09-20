@@ -17,8 +17,12 @@ os.system("sudo  sed -i '/After/c After=can-udp-bridge.service' /lib/systemd/sys
 
 class DingoExtras(robot_upstart.providers.Generic):
     def post_install(self):
-        call('bash /home/administrator/dingo_ws/src/dingo_robot/dingo_bringup/scripts/set-wireless-interface', shell=True)
-        call('bash /home/administrator/dingo_ws/src/dingo_robot/dingo_bringup/scripts/set-dingo-config', shell=True)
+        set_dingo_config_path = find_in_workspaces(project="dingo_bringup", path="set-dingo-config")[0]   
+        set_wireless_interface_path = find_in_workspaces(project="dingo_bringup", path="set-wireless-interface")[0]
+        set_dingo_config_cmd = "bash " + set_dingo_config_path
+        set_wireless_interface_cmd = "bash " + set_wireless_interface_path
+        call(set_dingo_config_cmd, shell=True)
+        call(set_wireless_interface_cmd, shell=True)
 
     def generate_install(self):
         with open(find_in_workspaces(project="dingo_bringup", path="can-udp-bridge.conf")[0]) as f:
