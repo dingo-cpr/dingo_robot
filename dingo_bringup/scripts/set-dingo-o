@@ -1,3 +1,0 @@
-#!/bin/bash
-
-sudo sed -i  '/^######.*/a export DINGO_OMNI=1' /etc/ros/setup.bash

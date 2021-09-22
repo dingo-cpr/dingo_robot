@@ -1,0 +1,17 @@
+#!/bin/bash
+
+read -p "Select the Dingo configuration (d/o): " DINGO_CONFIG
+
+if [[ $DINGO_CONFIG == d ]];
+then
+    echo "Setting DINGO_OMNI to 0 in /etc/ros/setup.bash..."
+    sudo sed -i  "/^######.*/a export DINGO_OMNI=0" /etc/ros/setup.bash
+elif [[ $DINGO_CONFIG == o ]];
+then
+    echo "Setting DINGO_OMNI to 1 in /etc/ros/setup.bash..."
+    sudo sed -i  "/^######.*/a export DINGO_OMNI=1" /etc/ros/setup.bash
+else
+    echo "An error occured: Invalid Dingo configuration"
+    echo "Exiting..."
+    exit 1
+fi

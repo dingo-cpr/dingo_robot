@@ -13,7 +13,7 @@ install(FILES scripts/can-udp-bridge.conf scripts/can-udp-bridge.sh
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(PROGRAMS scripts/install scripts/set-dingo-o
+install(PROGRAMS scripts/install scripts/set-dingo-config scripts/set-wireless-interface
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

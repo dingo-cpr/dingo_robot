@@ -3,6 +3,7 @@
 import os
 import robot_upstart
 
+from subprocess import call
 from catkin.find_in_workspaces import find_in_workspaces
 
 main_job = robot_upstart.Job(workspace_setup=os.environ['ROBOT_SETUP'])
@@ -16,7 +17,12 @@ os.system("sudo  sed -i '/After/c After=can-udp-bridge.service' /lib/systemd/sys
 
 class DingoExtras(robot_upstart.providers.Generic):
     def post_install(self):
-        pass
+        set_dingo_config_path = find_in_workspaces(project="dingo_bringup", path="set-dingo-config")[0]   
+        set_wireless_interface_path = find_in_workspaces(project="dingo_bringup", path="set-wireless-interface")[0]
+        set_dingo_config_cmd = "bash " + set_dingo_config_path
+        set_wireless_interface_cmd = "bash " + set_wireless_interface_path
+        call(set_dingo_config_cmd, shell=True)
+        call(set_wireless_interface_cmd, shell=True)
 
     def generate_install(self):
         with open(find_in_workspaces(project="dingo_bringup", path="can-udp-bridge.conf")[0]) as f:
@@ -35,7 +41,6 @@ class DingoExtras(robot_upstart.providers.Generic):
             "/etc/systemd/system/multi-user.target.wants/can-udp-bridge.service": {
                 "symlink": "/lib/systemd/system/can-udp-bridge.service"
             }}
-
 
 other_job = robot_upstart.Job()
 other_job.install(Provider=DingoExtras)
