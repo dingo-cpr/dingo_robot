@@ -43,7 +43,7 @@
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/types/hardware_interface_status_values.hpp"
-#include "sensor_msgs/JointState.h"
+#include "sensor_msgs/msg/joint_state.hpp"
 #include "puma_motor_driver/socketcan_gateway.hpp"
 #include "puma_motor_driver/driver.hpp"
 #include "puma_motor_driver/multi_driver_node.hpp"
