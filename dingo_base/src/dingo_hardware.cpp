@@ -33,217 +33,370 @@
 #include <boost/assign.hpp>
 #include <vector>
 
-#include <puma_motor_driver/driver.h>
-#include <puma_motor_driver/multi_driver_node.h>
+#include "puma_motor_driver/driver.hpp"
+#include "puma_motor_driver/multi_driver_node.hpp"
+#include "puma_motor_driver/socketcan_gateway.hpp"
+#include "puma_motor_msgs/msg/multi_feedback.hpp"
 
-#include "dingo_base/dingo_hardware.h"
+
+#include "dingo_base/dingo_hardware.hpp"
+
+#include "hardware_interface/types/hardware_interface_type_values.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace dingo_base
 {
 
-DingoHardware::DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh,
-                             puma_motor_driver::Gateway& gateway, bool& dingo_omni):
-  nh_(nh),
-  pnh_(pnh),
-  gateway_(gateway),
-  active_(false)
+hardware_interface::return_type DingoHardware::configure(
+	const hardware_interface::HardwareInfo & info)
 {
-  pnh_.param<double>("gear_ratio", gear_ratio_, 24);
-  pnh_.param<int>("encoder_cpr", encoder_cpr_, 10);
-  pnh_.param<bool>("flip_motor_direction", flip_motor_direction_, false);
-  pnh_.param<double>("gains/p", gain_p_, 0.025);
-  pnh_.param<double>("gains/i", gain_i_, 0.005);
-  pnh_.param<double>("gains/d", gain_d_, 0.0);
+	active_ = false;
 
-  // Set up the wheels: differs for Dingo-D vs Dingo-O
-  ros::V_string joint_names;
-  std::vector<uint8_t> joint_can_ids;
-  std::vector<float> joint_directions;
-  if (!dingo_omni)
-  {
-    joint_names.assign({"left_wheel", "right_wheel"});  // NOLINT(whitespace/braces)
-    joint_can_ids.assign({2, 3});                       // NOLINT(whitespace/braces)
-    joint_directions.assign({1, -1});                   // NOLINT(whitespace/braces)
-  }
-  else
-  {
-    joint_names.assign({"front_left_wheel", "front_right_wheel",  // NOLINT(whitespace/braces)
-        "rear_left_wheel", "rear_right_wheel"});                  // NOLINT(whitespace/braces)
-    joint_can_ids.assign({2, 3, 4, 5});                           // NOLINT(whitespace/braces)
-    joint_directions.assign({1, -1, 1, -1});                      // NOLINT(whitespace/braces)
-  }
+	if (configure_default(info) != hardware_interface::return_type::OK)
+	{
+		return hardware_interface::return_type::ERROR;
+	}
 
-  // Flip the motor direction if needed
-  if (flip_motor_direction_)
-  {
-    for (std::size_t i = 0; i < joint_directions.size(); i++)
-    {
-      joint_directions[i] *= -1;
-    }
-  }
+	// Create gateway for the motor drivers
+	std::string canbus_dev;
+	canbus_dev = info_.hardware_parameters["canbus_dev"];
+	gateway_ = std::shared_ptr<puma_motor_driver::SocketCANGateway>(new puma_motor_driver::SocketCANGateway(canbus_dev));
 
-  for (uint8_t i = 0; i < joint_names.size(); i++)
-  {
-    hardware_interface::JointStateHandle joint_state_handle(joint_names[i],
-        &joints_[i].position, &joints_[i].velocity, &joints_[i].effort);
-    joint_state_interface_.registerHandle(joint_state_handle);
+	// Read all the parameters for the robot
+	gear_ratio_ = stod(info_.hardware_parameters["gear_ratio"]);
+	encoder_cpr_ = stoi(info_.hardware_parameters["encoder_cpr"]);
+	flip_motor_direction_ = stoi(info_.hardware_parameters["flip_motor_direction"]);
+	gain_p_ = stod(info_.hardware_parameters["gains_p"]);
+	gain_i_ = stod(info_.hardware_parameters["gains_i"]);
+	gain_d_ = stod(info_.hardware_parameters["gains_d"]);
 
-    hardware_interface::JointHandle joint_handle(
-        joint_state_handle, &joints_[i].velocity_command);
-    velocity_joint_interface_.registerHandle(joint_handle);
+	for (const hardware_interface::ComponentInfo & joint : info_.joints)
+	{
+		// DiffBotSystem has exactly two states and one command interface on each joint
+		if (joint.command_interfaces.size() != 1)
+		{
+			RCLCPP_FATAL(
+				rclcpp::get_logger("controller_manager"),
+				"Joint '%s' has %d command interfaces found. 1 expected.", joint.name.c_str(),
+				joint.command_interfaces.size());
+			return hardware_interface::return_type::ERROR;
+		}
 
-    puma_motor_driver::Driver driver(gateway_, joint_can_ids[i], joint_names[i]);
-    driver.clearMsgCache();
-    driver.setEncoderCPR(encoder_cpr_);
-    driver.setGearRatio(gear_ratio_ * joint_directions[i]);
-    driver.setMode(puma_motor_msgs::Status::MODE_SPEED, gain_p_, gain_i_, gain_d_);
-    drivers_.push_back(driver);
-  }
+		if (joint.command_interfaces[0].name != hardware_interface::HW_IF_VELOCITY)
+		{
+			RCLCPP_FATAL(
+				rclcpp::get_logger("controller_manager"),
+				"Joint '%s' have %s command interfaces found. '%s' expected.", joint.name.c_str(),
+				joint.command_interfaces[0].name.c_str(), hardware_interface::HW_IF_VELOCITY);
+			return hardware_interface::return_type::ERROR;
+		}
 
-  registerInterface(&joint_state_interface_);
-  registerInterface(&velocity_joint_interface_);
+		if (joint.state_interfaces.size() != 2)
+		{
+			RCLCPP_FATAL(
+				rclcpp::get_logger("controller_manager"),
+				"Joint '%s' has %d state interface. 2 expected.", joint.name.c_str(),
+				joint.state_interfaces.size());
+			return hardware_interface::return_type::ERROR;
+		}
 
-  multi_driver_node_.reset(new puma_motor_driver::MultiDriverNode(nh_, drivers_));
+		if (joint.state_interfaces[0].name != hardware_interface::HW_IF_POSITION)
+		{
+			RCLCPP_FATAL(
+				rclcpp::get_logger("controller_manager"),
+				"Joint '%s' have '%s' as first state interface. '%s' and '%s' expected.",
+				joint.name.c_str(), joint.state_interfaces[0].name.c_str(),
+				hardware_interface::HW_IF_POSITION);
+			return hardware_interface::return_type::ERROR;
+		}
+
+		if (joint.state_interfaces[1].name != hardware_interface::HW_IF_VELOCITY)
+		{
+			RCLCPP_FATAL(
+				rclcpp::get_logger("controller_manager"),
+				"Joint '%s' have '%s' as second state interface. '%s' expected.", joint.name.c_str(),
+				joint.state_interfaces[1].name.c_str(), hardware_interface::HW_IF_VELOCITY);
+			return hardware_interface::return_type::ERROR;
+		}
+	}
+
+	std::vector<uint8_t> joint_can_ids;
+	std::vector<float> joint_directions;
+	if(info_.joints.size() == 2)
+	{
+		joint_can_ids.assign({2, 3});                       // NOLINT(whitespace/braces)
+		joint_directions.assign({1, -1});                   // NOLINT(whitespace/braces)
+	}
+	else if(info_.joints.size() == 4)
+	{
+		joint_can_ids.assign({2, 3, 4, 5});                           // NOLINT(whitespace/braces)
+		joint_directions.assign({1, -1, 1, -1});                      // NOLINT(whitespace/braces)
+	}
+	else
+	{
+		RCLCPP_FATAL(
+			rclcpp::get_logger("controller_manager"),
+			"Unknown number of joints. Expected 2 or 4, got %d",
+			info_.joints.size());
+	}
+
+	// Flip the motor direction if needed
+	if (flip_motor_direction_)
+	{
+		for (std::size_t i = 0; i < joint_directions.size(); i++)
+		{
+			joint_directions[i] *= -1;
+		}
+	}
+
+	for (uint8_t i = 0; i < info_.joints.size(); i++)
+	{
+		puma_motor_driver::Driver driver(gateway_, joint_can_ids[i], info_.joints[i].name);
+		driver.clearMsgCache();
+		driver.setEncoderCPR(encoder_cpr_);
+		driver.setGearRatio(gear_ratio_ * joint_directions[i]);
+		driver.setMode(puma_motor_msgs::msg::Status::MODE_SPEED, gain_p_, gain_i_, gain_d_);
+		drivers_.push_back(driver);
+	}
+
+	multi_driver_node_.reset(new puma_motor_driver::MultiDriverNode("multi_driver_node", drivers_));
+
+	for (auto& driver : drivers_)
+	{
+		driver.configureParams();
+	}
+
+	std::thread can_read_thread(&DingoHardware::canReadThread, this);
+
+	status_ = hardware_interface::status::CONFIGURED;
+	return hardware_interface::return_type::OK;
 }
 
-void DingoHardware::init()
+std::vector<hardware_interface::StateInterface> DingoHardware::export_state_interfaces()
 {
-  while (!connectIfNotConnected())
-  {
-    ros::Duration(1.0).sleep();
-  }
+	std::vector<hardware_interface::StateInterface> state_interfaces;
+	for (auto i = 0u; i < info_.joints.size(); i++)
+	{
+		state_interfaces.emplace_back(hardware_interface::StateInterface(
+			info_.joints[i].name, hardware_interface::HW_IF_POSITION, &joints_[i].position));
+		state_interfaces.emplace_back(hardware_interface::StateInterface(
+			info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &joints_[i].velocity));
+	}
+
+	return state_interfaces;
+}
+
+std::vector<hardware_interface::CommandInterface> DingoHardware::export_command_interfaces()
+{
+	std::vector<hardware_interface::CommandInterface> command_interfaces;
+	for (auto i = 0u; i < info_.joints.size(); i++)
+	{
+		command_interfaces.emplace_back(hardware_interface::CommandInterface(
+			info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &joints_[i].velocity_command));
+	}
+
+	return command_interfaces;
+}
+
+hardware_interface::return_type DingoHardware::start()
+{
+	RCLCPP_INFO(rclcpp::get_logger("controller_manager"), "Starting ...please wait...");
+	while (!connectIfNotConnected())
+	{
+		rclcpp::Rate(1).sleep();
+	}
+
+	this->verify();
+
+	status_ = hardware_interface::status::STARTED;
+	RCLCPP_INFO(rclcpp::get_logger("controller_manager"), "System Successfully started!");
+	return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type DingoHardware::stop()
+{
+	RCLCPP_INFO(rclcpp::get_logger("controller_manager"), "Stopping ...please wait...");
+
+	status_ = hardware_interface::status::STOPPED;
+
+	RCLCPP_INFO(rclcpp::get_logger("controller_manager"), "System successfully stopped!");
+
+	return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type DingoHardware::read()
+{
+	if (this->isActive())
+	{
+		this->powerHasNotReset();
+		this->updateJointsFromHardware();
+	}
+	else
+	{
+		for (auto& driver : drivers_)
+		{
+			driver.configureParams();
+		}
+	}
+
+	return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type DingoHardware::write()
+{
+	if (this->isActive())
+	{
+		this->command();
+		this->requestData();
+	}
+	else
+	{
+		this->verify();
+	}
+	return hardware_interface::return_type::OK;
 }
 
 bool DingoHardware::connectIfNotConnected()
 {
-  if (!gateway_.isConnected())
-  {
-    if (!gateway_.connect())
-    {
-      ROS_ERROR("Error connecting to motor driver gateway. Retrying in 1 second.");
-      return false;
-    }
-    else
-    {
-      ROS_INFO("Connection to motor driver gateway successful.");
-    }
-  }
-  return true;
-}
-
-void DingoHardware::configure()
-{
-  for (auto& driver : drivers_)
-  {
-    driver.configureParams();
-  }
+	if (!gateway_->isConnected())
+	{
+		if (!gateway_->connect())
+		{
+			RCLCPP_ERROR(
+				rclcpp::get_logger("controller_manager"),
+				"Error connecting to motor driver gateway. Retrying in 1 second.");
+			return false;
+		}
+		else
+		{
+			RCLCPP_INFO(
+				rclcpp::get_logger("controller_manager"),
+				"Connection to motor driver gateway successful.");
+		}
+	}
+	return true;
 }
 
 void DingoHardware::verify()
 {
-  for (auto& driver : drivers_)
-  {
-    driver.verifyParams();
-  }
+	for (auto& driver : drivers_)
+	{
+		driver.verifyParams();
+	}
 }
 
 bool DingoHardware::areAllDriversActive()
 {
-  for (auto& driver : drivers_)
-  {
-    if (!driver.isConfigured())
-    {
-      return false;
-    }
-  }
-  return true;
+	for (auto& driver : drivers_)
+	{
+		if (!driver.isConfigured())
+		{
+			return false;
+		}
+	}
+	return true;
 }
 
 bool DingoHardware::isActive()
 {
-  if (active_ == false && this->areAllDriversActive())
-  {
-    active_ = true;
-    multi_driver_node_->activePublishers(active_);
-    ROS_INFO("Dingo Hardware Active");
-  }
-  else if (!this->areAllDriversActive() && active_ == true)
-  {
-    active_ = false;
-  }
+	if (!active_ && this->areAllDriversActive())
+	{
+		active_ = true;
+		multi_driver_node_->activePublishers(active_);
+		RCLCPP_INFO(
+			rclcpp::get_logger("controller_manager"),
+			"Dingo Hardware Active");
+	}
+	else if (!this->areAllDriversActive() && active_)
+	{
+		active_ = false;
+	}
 
-  if (!active_)
-  {
-    ROS_WARN_THROTTLE(60, "Dingo Hardware Inactive");
-  }
+	if (!active_)
+	{
+		RCLCPP_WARN(
+			rclcpp::get_logger("controller_manager"),
+			"Dingo Hardware Inactive");
+	}
 
-  return active_;
+	return active_;
 }
 
 void DingoHardware::powerHasNotReset()
 {
-  // Checks to see if power flag has been reset for each driver
-  for (auto& driver : drivers_)
-  {
-    if (driver.lastPower() != 0)
-    {
-      active_ = false;
-      ROS_WARN("There was a power reset on Dev: %d, will reconfigure all drivers.", driver.deviceNumber());
-      multi_driver_node_->activePublishers(active_);
-      for (auto& driver : drivers_)
-      {
-        driver.resetConfiguration();
-      }
-    }
-  }
-}
-
-bool DingoHardware::inReset()
-{
-  return !active_;
-}
-
-void DingoHardware::requestData()
-{
-  for (auto& driver : drivers_)
-  {
-    driver.requestFeedbackPowerState();
-  }
-}
-
-void DingoHardware::updateJointsFromHardware()
-{
-  uint8_t index = 0;
-  for (auto& driver : drivers_)
-  {
-    Joint* f = &joints_[index];
-    f->effort = driver.lastCurrent();
-    f->position = driver.lastPosition();
-    f->velocity = driver.lastSpeed();
-    index++;
-  }
+	// Checks to see if power flag has been reset for each driver
+	for (auto& driver : drivers_)
+	{
+		if (driver.lastPower() != 0)
+		{
+			active_ = false;
+			RCLCPP_WARN(
+				rclcpp::get_logger("controller_manager"),
+				"There was a power reset on Dev: %d, will reconfigure all drivers.", driver.deviceNumber());
+			multi_driver_node_->activePublishers(active_);
+			for (auto& driver : drivers_)
+			{
+				driver.resetConfiguration();
+			}
+		}
+	}
 }
 
 void DingoHardware::command()
 {
-  uint8_t i = 0;
-  for (auto& driver : drivers_)
+	uint8_t i = 0;
+	for (auto& driver : drivers_)
+	{
+		driver.commandSpeed(joints_[i].velocity_command);
+		i++;
+	}
+}
+
+void DingoHardware::requestData()
+{
+	for (auto& driver : drivers_)
+	{
+		driver.requestFeedbackPowerState();
+	}
+}
+
+void DingoHardware::updateJointsFromHardware()
+{
+	uint8_t index = 0;
+	for (auto& driver : drivers_)
+	{
+		Joint* f = &joints_[index];
+		f->effort = driver.lastCurrent();
+		f->position = driver.lastPosition();
+		f->velocity = driver.lastSpeed();
+		index++;
+	}
+}
+
+void DingoHardware::canReadThread()
+{
+	rclcpp::Rate rate(200);
+	while (rclcpp::ok())
   {
-    driver.commandSpeed(joints_[i].velocity_command);
-    i++;
+    this->canRead();
+    rate.sleep();
   }
 }
 
 void DingoHardware::canRead()
 {
-  puma_motor_driver::Message recv_msg;
-  while (gateway_.recv(&recv_msg))
-  {
-    for (auto& driver : drivers_)
-    {
-      driver.processMessage(recv_msg);
-    }
-  }
+	puma_motor_driver::Message recv_msg;
+	while (gateway_->recv(&recv_msg))
+	{
+		for (auto& driver : drivers_)
+		{
+			driver.processMessage(recv_msg);
+		}
+	}
 }
 
 }  // namespace dingo_base
+
+#include "pluginlib/class_list_macros.hpp"
+PLUGINLIB_EXPORT_CLASS(
+	dingo_base::DingoHardware, hardware_interface::SystemInterface)

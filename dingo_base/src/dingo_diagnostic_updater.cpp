@@ -36,14 +36,23 @@
 #include <unistd.h>
 
 #include "boost/algorithm/string/predicate.hpp"
-#include "diagnostic_updater/update_functions.h"
-#include "dingo_base/dingo_diagnostic_updater.h"
+#include "diagnostic_updater/diagnostic_updater.hpp"
+#include "diagnostic_updater/publisher.hpp"
+#include "dingo_base/dingo_diagnostic_updater.hpp"
 #include "dingo_base/dingo_power_levels.h"
 
 namespace dingo_base
 {
 
-DingoDiagnosticUpdater::DingoDiagnosticUpdater()
+DingoDiagnosticUpdater::DingoDiagnosticUpdater(rclcpp::Node::SharedPtr node)
+: Updater(
+		node->get_node_base_interface(),
+		node->get_node_logging_interface(),
+		node->get_node_parameters_interface(),
+		node->get_node_timers_interface(),
+		node->get_node_topics_interface()
+  ),
+	node_(node)
 {
   setHardwareID("unknown");
   gethostname(hostname_, 1024);
@@ -54,15 +63,18 @@ DingoDiagnosticUpdater::DingoDiagnosticUpdater()
   add("Current consumption", this, &DingoDiagnosticUpdater::currentDiagnostics);
   add("Power consumption", this, &DingoDiagnosticUpdater::powerDiagnostics);
   add("Temperature", this, &DingoDiagnosticUpdater::temperatureDiagnostics);
-
+	
   // The arrival of this message runs the update() method and triggers the above callbacks.
-  status_sub_ = nh_.subscribe("mcu/status", 5, &DingoDiagnosticUpdater::statusCallback, this);
+  status_sub_ = node_->create_subscription<dingo_msgs::msg::Status>(
+		"mcu/status", 5, std::bind(&DingoDiagnosticUpdater::statusCallback, this, std::placeholders::_1));
 
   // record the battery state
-  battery_state_sub_ = nh_.subscribe("battery/status", 1, &DingoDiagnosticUpdater::batteryStateCallback, this);
+  battery_state_sub_ = node_->create_subscription<sensor_msgs::msg::BatteryState>(
+		"battery/status", 1, std::bind(&DingoDiagnosticUpdater::batteryStateCallback, this, std::placeholders::_1));
 
   // These message frequencies are reported on separately.
-  ros::param::param("~expected_imu_frequency", expected_imu_frequency_, 50.0);
+	node_->declare_parameter("expected_imu_frequency", 50.0);
+	node_->get_parameter("expected_imu_frequency", expected_imu_frequency_);
   imu_diagnostic_ = new diagnostic_updater::TopicDiagnostic("/imu/data_raw", *this,
       diagnostic_updater::FrequencyStatusParam(&expected_imu_frequency_, &expected_imu_frequency_, 0.15),
       diagnostic_updater::TimeStampStatusParam(-1, 1.0));

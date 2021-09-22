@@ -1,0 +1,9 @@
+<library path="dingo_base">
+  <class name="dingo_base/DingoHardware"
+         type="dingo_base::DingoHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The hardware interface for the Dingo robot
+    </description>
+  </class>
+</library>

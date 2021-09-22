@@ -11,6 +11,11 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+	<depend>ros2_control</depend>
+	<depend>rclcpp</depend>
+  <depend>puma_motor_msgs</depend>
+	<depend>puma_motor_driver</depend>
+
   <!-- <build_depend>hardware_interface</build_depend>
   <build_depend>roscpp</build_depend>
 
@@ -18,8 +23,6 @@
   <depend>diagnostic_updater</depend>
   <depend>dingo_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>puma_motor_msgs</depend>
-  <depend>puma_motor_driver</depend>
   <depend>realtime_tools</depend>
   <depend>rosserial_server</depend>
   <depend>sensor_msgs</depend>

@@ -30,50 +30,55 @@
  * Please send comments, questions, or patches to code@clearpathrobotics.com
  */
 
-#ifndef DINGO_BASE_DINGO_HARDWARE_H
-#define DINGO_BASE_DINGO_HARDWARE_H
+#ifndef DINGO_BASE_DINGO_HARDWARE_HPP_
+#define DINGO_BASE_DINGO_HARDWARE_HPP_
 
 #include <vector>
 
 #include "boost/thread.hpp"
 #include "boost/shared_ptr.hpp"
-#include "hardware_interface/joint_state_interface.h"
-#include "hardware_interface/joint_command_interface.h"
-#include "hardware_interface/robot_hw.h"
-#include "ros/ros.h"
+#include "hardware_interface/base_interface.hpp"
+#include "hardware_interface/handle.hpp"
+#include "hardware_interface/hardware_info.hpp"
+#include "hardware_interface/system_interface.hpp"
+#include "hardware_interface/types/hardware_interface_return_values.hpp"
+#include "hardware_interface/types/hardware_interface_status_values.hpp"
 #include "sensor_msgs/JointState.h"
-#include "puma_motor_driver/socketcan_gateway.h"
-#include "puma_motor_driver/driver.h"
-#include "puma_motor_driver/multi_driver_node.h"
-#include "puma_motor_msgs/MultiFeedback.h"
+#include "puma_motor_driver/socketcan_gateway.hpp"
+#include "puma_motor_driver/driver.hpp"
+#include "puma_motor_driver/multi_driver_node.hpp"
+#include "puma_motor_msgs/msg/multi_feedback.hpp"
 
 namespace dingo_base
 {
 
 /** This class encapsulates the Dingo hardware */
-class DingoHardware : public hardware_interface::RobotHW
+class DingoHardware 
+: public hardware_interface::BaseInterface<hardware_interface::SystemInterface>
 {
 public:
-  /** Initializes joints, callbacks, etc.
-   *  @param[in] nh Handle used for ROS communication
-   *  @param[in] pnh Handle used for Puma communication to set parameters
-   *  @param[in] gateway Used for Puma motor driver communication
-   *  @param[in] boolean that determines if Dingo O is selected
-   */
-  DingoHardware(ros::NodeHandle& nh, ros::NodeHandle& pnh, puma_motor_driver::Gateway& gateway, bool& dingo_omni);
+  hardware_interface::return_type configure(const hardware_interface::HardwareInfo & info) override;
 
-  /** Connects to the CAN bus. Keep trying to connect to the CAN bus until
-   *  connected.
-   */
-  void init();
+  std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
+
+  std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
+
+  hardware_interface::return_type start() override;
+
+  hardware_interface::return_type stop() override;
+
+  hardware_interface::return_type read() override;
+
+  hardware_interface::return_type write() override;
 
   /** Makes a single attempt to connect to the CAN bus if not connected.
    *  @return true if connected; false if not connected
    */
   bool connectIfNotConnected();
 
-  /** Configures the motor drivers */
-  void configure();
+
+
+
 
   /** Validates the parameters for the motor drivers */
   void verify();
@@ -114,21 +119,14 @@ public:
   /** Processes all received messages through the connected driver instances. */
   void canRead();
 
+	void canReadThread();
+
   /** Sends all queued data to Puma motor driver the gateway. */
   void canSend();
 
 private:
-  /** ROS communication handles (regular, puma) */
-  ros::NodeHandle nh_, pnh_;
-
   /** Gateway for Puma motor driver */
-  puma_motor_driver::Gateway& gateway_;
-
-  /** Puma motor drivers (2 or 4) */
-  std::vector<puma_motor_driver::Driver> drivers_;
-
-  /** Puma multi-node driver */
-  std::shared_ptr<puma_motor_driver::MultiDriverNode> multi_driver_node_;
+  std::shared_ptr<puma_motor_driver::Gateway> gateway_;
 
   /** Indicates if the drivers are configured */
   bool active_;
@@ -145,11 +143,13 @@ private:
   /** Indicates if the motor direction should be flipped */
   bool flip_motor_direction_;
 
-  /** ROS Control interface for joint state */
-  hardware_interface::JointStateInterface joint_state_interface_;
+  /** Puma motor drivers (2 or 4) */
+  std::vector<puma_motor_driver::Driver> drivers_;
 
-  /** ROS Control interface for velocity */
-  hardware_interface::VelocityJointInterface velocity_joint_interface_;
+  /** Puma multi-node driver */
+  std::shared_ptr<puma_motor_driver::MultiDriverNode> multi_driver_node_;
+
+	std::thread can_read_thread_;
 
   /** Latest information for each joint.
    *  These are mutated on the controls thread only.
@@ -171,4 +171,4 @@ private:
 
 }  // namespace dingo_base
 
-#endif  // DINGO_BASE_DINGO_HARDWARE_H
+#endif  // DINGO_BASE_DINGO_HARDWARE_HPP_

@@ -30,8 +30,8 @@
  * Please send comments, questions, or patches to code@clearpathrobotics.com
  */
 
-#ifndef DINGO_BASE_DINGO_POWER_LEVELS_H
-#define DINGO_BASE_DINGO_POWER_LEVELS_H
+#ifndef DINGO_BASE_DINGO_POWER_LEVELS_HPP_
+#define DINGO_BASE_DINGO_POWER_LEVELS_HPP_
 
 /**
  * Container for defining voltage & amperage warning levels for the Dingo-D and Dingo-O
@@ -73,4 +73,4 @@ public:
   static constexpr float TEMPERATURE_CRITICAL          = 100.0;
   static constexpr float TEMPERATURE_WARNING           =  60.0;
 };
-#endif  // DINGO_BASE_DINGO_POWER_LEVELS_H
+#endif  // DINGO_BASE_DINGO_POWER_LEVELS_HPP_
