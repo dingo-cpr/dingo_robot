@@ -31,6 +31,8 @@
  */
 
 #include <boost/assign.hpp>
+#include <boost/asio.hpp> 
+#include <boost/thread.hpp> 
 #include <vector>
 
 #include "puma_motor_driver/driver.hpp"

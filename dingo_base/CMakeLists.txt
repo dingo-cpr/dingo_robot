@@ -15,7 +15,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -fPIC)
 endif()
 
 ################################################################################
@@ -62,7 +62,7 @@ target_include_directories(
   ${PROJECT_NAME}
   PUBLIC
   include
-	${puma_motor_driver_INCLUDE_DIRS}
+	# ${puma_motor_driver_INCLUDE_DIRS}
 )
 
 pluginlib_export_plugin_description_file(hardware_interface dingo_hardware.xml)
