@@ -168,7 +168,7 @@ hardware_interface::return_type DingoHardware::configure(
 		driver.configureParams();
 	}
 
-	std::thread can_read_thread(&DingoHardware::canReadThread, this);
+	boost::shared_ptr<boost::thread> thread(new boost::thread(&DingoHardware::canReadThread, this));
 
 	status_ = hardware_interface::status::CONFIGURED;
 	return hardware_interface::return_type::OK;
