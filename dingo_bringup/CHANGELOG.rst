@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.4 (2021-10-01)
+------------------
 * Setup scripts to automatically set DINGO_OMNI and DINGO_WIRELESS_INTERFACE envars (`#8 <https://github.com/dingo-cpr/dingo_robot/issues/8>`_)
   * Automatically triggering setup scripts in post_install()
   * Add wireless interface and dingo config scripts
