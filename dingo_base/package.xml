@@ -12,6 +12,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
 	<depend>ros2_control</depend>
+  <depend>ros2_controllers</depend>
 	<depend>rclcpp</depend>
   <depend>puma_motor_msgs</depend>
 	<depend>puma_motor_driver</depend>
