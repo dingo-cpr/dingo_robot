@@ -2,6 +2,17 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Setup scripts to automatically set DINGO_OMNI and DINGO_WIRELESS_INTERFACE envars (`#8 <https://github.com/dingo-cpr/dingo_robot/issues/8>`_)
+  * Automatically triggering setup scripts in post_install()
+  * Add wireless interface and dingo config scripts
+  * Find setup scripts using find_in_workspaces, and trigger automatically
+  * Fix script names
+  Co-authored-by: Joey Yang <jyang@clearpathrobotics.com>
+* Fix the name of teh VLP16 launch file that gets included
+* Contributors: Chris Iverach-Brereton, jyang-cpr
+
 0.1.3 (2021-03-08)
 ------------------
 * Move the VLP16 to a new DINGO_LASER_3D family of vars, add DINGO_LASER_SECONDARY
