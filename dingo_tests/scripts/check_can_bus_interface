@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Colours
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+INTERFACE_NAME="can0"
+
+# Create array to store CAN devices found
+declare -a CAN_DEVICES_ARRAY
+
+# Get headers of all CAN bus interfaces
+HEADERS=$(sudo ifconfig "$INTERFACE_NAME" | grep "$INTERFACE_NAME")
+
+# Assume only 1 CAN bus interface exists
+NAME=$(echo $HEADERS | cut -d " " -f 1 | sed "s/:$//")
+STATUS="$(echo $HEADERS | cut -d " " -f 2)"
+
+# Dingo-D has 2 encoders/CAN devices
+if [[ $DINGO_OMNI == 0 ]];
+then
+    NUM_CAN_DEVICES=2
+# Dingo-O has 4 encoders/CAN devices
+elif [[ $DINGO_OMNI == 1 ]];
+then
+    NUM_CAN_DEVICES=4
+else
+    echo -e "${RED}ERROR: Environment variable DINGO_OMNI is not set, or it is set to an invalid value"
+    echo "Pleasure ensure the environment variable DINGO_OMNI is set properly"
+    echo -e "Exiting...${NC}"
+    exit 1
+fi
+
+# Check if CAN bus interface detected
+if [[ $NAME == "$INTERFACE_NAME" ]];
+then
+    echo "Detected CAN bus interface: $INTERFACE_NAME"
+
+    #Verify that CAN bus interface is activated
+    if [[ $STATUS == *"UP"* ]];
+    then
+        echo "CAN bus interface $INTERFACE_NAME is activated."
+        echo "Checking CAN packets on CAN bus interface: $INTERFACE_NAME..."
+ 
+        # Read some CAN messages
+        CAN_DUMP=$(timeout 1s candump $INTERFACE_NAME)
+
+        # Iterate through CAN messages
+        while IFS= read -r LINE; 
+        do
+            CAN_MESSAGE="$(echo $LINE | cut -d " " -f 2)"
+            CAN_SIZE="$(echo $LINE | cut -d " " -f 3 | sed 's/[][]//g')"
+            CAN_ID="${CAN_MESSAGE: -1}"
+
+            # Add CAN device ID to array if not found already, and is 4 bytes long (indicating a message from encoder to computer)
+            if [[ ! "${CAN_DEVICES_ARRAY[*]}" =~ $CAN_ID ]] && [[ $CAN_SIZE == 4 ]];
+            then
+		        CAN_DEVICES_ARRAY+=("$CAN_ID")
+            fi
+        done <<< $CAN_DUMP
+
+        # Verify actual number of CAN devices found matches expected
+        if [[ "${#CAN_DEVICES_ARRAY[@]}" == $NUM_CAN_DEVICES ]]; 
+        then
+            echo -e "${GREEN}PASSED: Received good CAN packets from $NUM_CAN_DEVICES encoders${NC}"
+        else
+            echo -e "${RED}FAILED: Receiving CAN packets from ${#CAN_DEVICES_ARRAY[@]} encoders, but expecting $NUM_CAN_DEVICES encoders"
+            echo "Ensure Dingo's E-Stop is disengaged, or try rebooting"
+            echo -e "Exiting...${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}ERROR: CAN bus interface $INTERFACE_NAME is deactivated"
+        echo "Try activating the CAN bus interface using: sudo ifconfig "$INTERFACE_NAME" up"
+        echo -e "Exiting...${NC}"
+        exit 1
+    fi
+else
+    echo -e "${RED}ERROR: Could not detect CAN bus interface: $INTERFACE_NAME"
+    echo -e "Exiting...${NC}"
+    exit 1
+fi

@@ -1,0 +1,494 @@
+#!/usr/bin/env python
+# Software License Agreement (proprietary)
+#
+# @author    Roni Kreinin <rkreinin@clearpathrobotics.com>
+# @author    Joey Yang <jyang@clearpathrobotics.com>
+# @copyright (c) 2020, Clearpath Robotics, Inc., All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, is not permitted without the
+# express permission of Clearpath Robotics.
+
+import time
+import math
+import rospy
+from dingo_tests.test_tools import Tester, userInputTestResults, boolTestResults, printTestResults, getAdcTestResults, notApplicableTestResult
+from dingo_msgs.msg import Lights, RGB, Fans, Status
+from sensor_msgs.msg import Imu, MagneticField
+from puma_motor_msgs.msg import MultiFeedback
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+
+def lightingTest():
+    results = []
+    # Delay between publishing messages and requesting user input
+    response_delay = 0.5
+
+    topic = '/cmd_lights'
+    pub = rospy.Publisher(topic, Lights, queue_size=1)
+    msg = Lights()
+    # Rate for publishing for lighting test
+    # 1 ms
+    rate = rospy.Rate(1000)
+
+    # Set all lights to off
+    for light in msg.lights:
+        light.red = 0
+        light.green = 0
+        light.blue = 0
+
+    # Hold lights for 2 s
+    for i in range(2000):
+        pub.publish(msg)
+        rate.sleep()
+
+    time.sleep(response_delay)
+    results.append(userInputTestResults('Did all lights turn off?', 'All Off'))
+
+    # Set all lights to red
+    for light in msg.lights:
+        light.red = 255
+        light.green = 0
+        light.blue = 0
+
+    # Hold lights for 2 s
+    for i in range(2000):
+        pub.publish(msg)
+        rate.sleep()
+
+    time.sleep(response_delay)
+    results.append(userInputTestResults('Did all lights turn red?', 'All Red'))
+
+    # Set all lights to green
+    for light in msg.lights:
+        light.red = 0
+        light.green = 255
+        light.blue = 0
+
+    # Hold lights for 2 s
+    for i in range(2000):
+        pub.publish(msg)
+        rate.sleep()
+
+    time.sleep(response_delay)
+    results.append(userInputTestResults('Did all lights turn green?', 'All Green'))
+
+    # Set all lights to blue
+    for light in msg.lights:
+        light.red = 0
+        light.green = 0
+        light.blue = 255
+
+    # Hold lights for 2 s
+    for i in range(2000):
+        pub.publish(msg)
+        rate.sleep()
+
+    time.sleep(response_delay)
+    results.append(userInputTestResults('Did all lights turn blue?', 'All Blue'))
+    printTestResults('Lighting Test', results)
+    return True
+
+def coolingTest():
+    results = []
+
+    print('Is there an external fan (not the CPU fan) connected to Dingo?')
+    response = raw_input('y/n: ')
+
+    if response == 'y' or response == 'Y':
+        # Possible fan states
+        FAN_OFF = 0
+        FAN_ON_HIGH = 1
+        FAN_ON_LOW = 2
+
+        # Delay between publishing message and requesting user input
+        response_delay = 0.5
+
+        topic = '/mcu/cmd_fans'
+        pub = rospy.Publisher(topic, Fans, queue_size=1)
+        msg = Fans()
+        # Rate for publishing for cooling test
+        # 1 ms
+        rate = rospy.Rate(1000)
+
+        # Set fan off
+        msg.fan = FAN_OFF
+
+        # Hold fan for 2 s
+        for i in range(2000):
+            pub.publish(msg)
+            rate.sleep()
+
+        time.sleep(response_delay)
+        results.append(userInputTestResults('Did the fans stop?', 'Fan Off'))
+        
+        # Set fan low
+        msg.fan = FAN_ON_LOW
+
+        # Hold fan for 2 s
+        for i in range(2000):
+            pub.publish(msg)
+            rate.sleep()
+
+        time.sleep(response_delay)
+        results.append(userInputTestResults('Did the fans spin?', 'Fan Low'))
+
+        # Set fan high
+        msg.fan = FAN_ON_HIGH
+
+        # Hold fan for 2 s
+        for i in range(2000):
+            pub.publish(msg)
+            rate.sleep()
+
+        time.sleep(response_delay)
+        results.append(userInputTestResults('Did the fans spin faster?', 'Fan High'))
+        printTestResults('Cooling Test', results)
+        return True
+    elif response == 'n' or response == 'N':
+        print('No fan connected to Dingo. Unable to run Cooling Test.')
+        results.append(notApplicableTestResult())
+        printTestResults('Cooling Test', results)
+        return True
+    else:
+        print('Invalid input')
+        return False
+
+status_received = False
+status_msg = Status()
+
+def statusCallback(msg):
+    global status_msg, status_received
+    status_msg = msg
+    status_received = True
+
+def eStopTest():
+    global status_msg, status_received
+
+    results = []
+
+    topic = '/mcu/status'
+    rospy.Subscriber(topic, Status, statusCallback)
+    print('Subscribed to {}. Waiting for messages...'.format(topic))
+    timeout = 10
+    start_time = rospy.get_time()
+
+    # Wait for message
+    while not status_received:
+        wait_time = rospy.get_time() - start_time
+        
+        if wait_time > timeout:
+            print('Timeout. Did not receive messages on {}. Make sure the MCU is publishing data'.format(topic))
+            return
+        
+        pass
+
+    print('Received messages on {}'.format(topic))
+
+    prompt_flag = False
+
+    # Wait for E-Stop to be engaged before running test 
+    while not status_msg.stop_engaged:
+        if not prompt_flag:
+            print("E-Stop is disengaged. Waiting for E-Stop to be engaged before automatically rerunning this test...")
+            prompt_flag = True
+        
+    # Once E-Stop is engaged, run test
+    print("Confirmed that E-Stop is engaged")
+    results.append(userInputTestResults('Are all lights flashing red?', 'Lighting'))
+    results.append(boolTestResults(status_msg.stop_engaged, 'MCU Status'))
+    printTestResults('E-Stop Test', results)
+    return True
+
+def adcTest():
+    results = []
+
+    print('Is Dingo stationary?')
+    response = raw_input('y/n: ')
+
+    if response == 'y' or response == 'Y':
+        print('What type of battery does Dingo have?')
+        battery_type = raw_input('Lead Acid or Lithium Ion or Other (la/li/o): ')
+
+        battery_voltage = 0
+
+        # Expected battery voltages are according to Dingo datasheet
+        if battery_type == 'la':
+            battery_voltage = 12
+        elif battery_type == 'li':
+            battery_voltage = 14.4
+        elif battery_type == 'o':
+            battery_voltage = int(raw_input('Expected battery voltage: '))
+        else:
+            print('Invalid input')
+            return False
+
+        global status_msg, status_received
+
+        topic = '/mcu/status'
+        rospy.Subscriber(topic, Status, statusCallback)
+        print('Subscribed to {}. Waiting for messages...'.format(topic))
+        timeout = 10
+        start_time = rospy.get_time()
+
+        # Wait for message
+        while not status_received:
+            wait_time = rospy.get_time() - start_time
+            
+            if wait_time > timeout:
+                print('Timeout. Did not receive messages on {}. Make sure the MCU is publishing data'.format(topic))
+                return
+            
+            pass
+
+        print('Received messages on {}'.format(topic))
+
+        print('Battery voltage reads as: {}'.format(status_msg.measured_battery))
+        results.append(getAdcTestResults(status_msg.measured_battery, battery_voltage, 'Battery voltage'))
+        print('5V rail voltage reads as: {}'.format(status_msg.measured_5v))
+        results.append(getAdcTestResults(status_msg.measured_5v, 5, '5V voltage'))
+        print('12V rail voltage reads as: {}'.format(status_msg.measured_12v))
+        results.append(getAdcTestResults(status_msg.measured_12v, 12, '12V voltage'))
+        print('12V current reads as: {}'.format(status_msg.total_current))
+        results.append(getAdcTestResults(status_msg.total_current, 2, '12V current'))
+        print('ITX current reads as: {}'.format(status_msg.computer_current))
+        results.append(getAdcTestResults(status_msg.computer_current, 2, 'Computer current'))
+        printTestResults('ADC Test', results)
+        return True
+    elif response == 'n' or response == 'N':
+        print('Ensure Dingo is stationary before running ADC Test.')
+        results.append(notApplicableTestResult())
+        printTestResults('ADC Test', results)
+        return False
+    else:
+        print('Invalid input')
+        return False
+
+imu_msg_received = False
+imu_msg = Imu()
+
+def imuCallback(msg):
+    global imu_msg, imu_msg_received
+    imu_msg = msg
+    imu_msg_received = True
+
+odom_ekf_msg_received = False
+odom_ekf_msg = Odometry()
+
+def odomEkfCallback(msg):
+    global odom_ekf_msg, odom_ekf_msg_received
+    odom_ekf_msg = msg
+    odom_ekf_msg_received = True
+
+def rotateTest():
+    results = []
+
+    print('The Rotate Test will rotate Dingo 2 full revolutions. Dingo must be on the ground, E-Stop disengaged, and a 1 metre radius of safety clearance around Dingo is required. Are these conditions met?')
+    response = raw_input('y/n: ')
+
+    if response == 'y' or response == 'Y':
+        global imu_msg, imu_msg_received, odom_ekf_msg, odom_ekf_msg_received
+
+        frequency = 20
+        rate = rospy.Rate(frequency)
+        cmd_vel_msg = Twist()
+        cmd_topic = '/cmd_vel'
+        imu_topic = '/imu/data'
+        odom_ekf_topic = '/odometry/filtered'
+        pub = rospy.Publisher(cmd_topic, Twist, queue_size=1)
+        rospy.Subscriber(imu_topic, Imu, imuCallback)
+        rospy.Subscriber(odom_ekf_topic, Odometry, odomEkfCallback)
+        print('Subscribed to {}. Waiting for messages...'.format(imu_topic))
+        timeout = 10
+        start_time = rospy.get_time()
+
+        # Wait for message
+        while not imu_msg_received or not odom_ekf_msg_received:
+            wait_time = rospy.get_time() - start_time
+            
+            if wait_time > timeout:
+                if not imu_msg_received:
+                    print('Timeout. Did not receive messages on {}. Make sure IMU is publishing data'.format(imu_topic))
+                if not odom_ekf_msg_received:
+                    print('Timeout. Did not receive messages on {}. Make sure robot_localization EKF is publishing odometry data'.format(odom_ekf_topic))
+                return
+            
+            pass
+
+        print('Received messages on {} and {}'.format(imu_topic, odom_ekf_topic))
+
+        desired_num_rev = 2
+        desired_angular_displacement = desired_num_rev * 6.28
+        desired_angular_velocity = 0.5
+        odom_ekf_angular_displacement = 0
+        odom_ekf_angular_displacement_error = 0  
+        imu_angular_displacement = 0
+        imu_angular_displacement_error = 0
+        # Delay between publishing message and requesting user input
+        response_delay = 0.5
+        cmd_vel_msg.angular.z = desired_angular_velocity
+
+        print('Commanding Dingo to rotate...')
+
+        # Rotate for number of revolutions based on IMU angular velocity data
+        # Calculate angular displacement from IMU and EKF odometry
+        while imu_angular_displacement < desired_angular_displacement:
+            imu_angular_displacement = imu_angular_displacement + abs(imu_msg.angular_velocity.z / float(frequency))
+            odom_ekf_angular_displacement = odom_ekf_angular_displacement + abs(odom_ekf_msg.twist.twist.angular.z / float(frequency))
+            pub.publish(cmd_vel_msg)
+            rate.sleep()
+
+        print('Completed rotation')
+
+        imu_angular_displacement_error = abs((imu_angular_displacement - desired_angular_displacement) / desired_angular_displacement) * 100.0
+        odom_ekf_angular_displacement_error = abs((odom_ekf_angular_displacement - desired_angular_displacement) / desired_angular_displacement) * 100.0
+
+        print('Desired angular displacement (rad): {}, IMU angular displacement (rad): {}, Relative error (%): {}'.format(desired_angular_displacement, imu_angular_displacement, imu_angular_displacement_error))
+        print('Desired angular displacement (rad): {}, EKF Odometry angular displacement (rad): {}, Relative error (%): {}'.format(desired_angular_displacement, odom_ekf_angular_displacement, odom_ekf_angular_displacement_error))
+
+        time.sleep(response_delay)
+        results.append(userInputTestResults('Did Dingo perform 2 full rotations and return to its original spot?', 'Visual Test'))
+        printTestResults('Rotate Test', results)
+        return True
+    elif response == 'n' or response == 'N':
+        print('Please ensure that Dingo is on the ground, E-Stop disengaged, and a 1 metre radius of safety clearance around Dingo is provided before running the Rotate Test')
+        results.append(notApplicableTestResult())
+        printTestResults('Rotate Test', results)
+        return False
+    else:
+        print('Invalid input')
+        return False
+
+feedback_msg_received = False
+feedback_msg = MultiFeedback()
+
+def feedbackCallback(msg):
+    global feedback_msg, feedback_msg_received
+    feedback_msg = msg
+    feedback_msg_received = True
+
+odom_encoder_msg_received = False
+odom_encoder_msg = Odometry()
+
+def odomEncoderCallback(msg):
+    global odom_encoder_msg, odom_encoder_msg_received
+    odom_encoder_msg = msg
+    odom_encoder_msg_received = True
+
+def driveTest():
+    print('The Drive Test will drive Dingo forward 1 metre. Dingo must be on the ground, E-Stop disengaged, and a 2 metre safety clearance infront of Dingo is required. Are these conditions met?')
+    response = raw_input('y/n: ')
+
+    results = []
+
+    if response == 'y' or response == 'Y':
+        global feedback_msg, feedback_msg_received, odom_encoder_msg, odom_encoder_msg_received
+
+        frequency = 10
+        rate = rospy.Rate(frequency)
+        cmd_vel_msg = Twist()
+        cmd_topic = '/cmd_vel'
+        encoder_topic = '/feedback'
+        odom_encoder_topic = '/dingo_velocity_controller/odom'
+        pub = rospy.Publisher(cmd_topic, Twist, queue_size=1)
+        rospy.Subscriber(encoder_topic, MultiFeedback, feedbackCallback)
+        rospy.Subscriber(odom_encoder_topic, Odometry, odomEncoderCallback)
+        print('Subscribed to {} and {}. Waiting for messages...'.format(encoder_topic, odom_encoder_topic))
+        timeout = 10
+        start_time = rospy.get_time()
+        
+        # Wait for messages
+        while not feedback_msg_received or not odom_encoder_msg_received:
+            wait_time = rospy.get_time() - start_time
+            
+            if wait_time > timeout:
+                if not feedback_msg_received:
+                    print('Timeout. Did not receive messages on {}. Make sure encoders are publishing data'.format(encoder_topic))
+                if not odom_encoder_msg_received:
+                    print('Timeout. Did not receive messages on {}. Make sure encoder-fused odometry data is being published'.format(odom_encoder_topic))
+                return
+            
+            pass
+
+        print('Received messages on {} and {}'.format(encoder_topic, odom_encoder_topic))
+
+        desired_linear_displacement = 1
+        desired_linear_velocity = 0.3
+        odom_encoder_linear_displacement = 0
+        odom_encoder_linear_displacement_error = 0
+        num_motors_d = 2
+        num_motors_o = 4
+        num_motors = 0
+        wheel_radius = 0
+        # Delay between publishing message and requesting user input
+        response_delay = 0.5
+        initial_position_x = odom_encoder_msg.pose.pose.position.x
+        cmd_vel_msg.linear.x = desired_linear_velocity
+
+        # Check Dingo config based on number of encoders
+        if len(feedback_msg.drivers_feedback) == num_motors_d:
+            print('Receiving feedback from {} encoders. Dingo config: Dingo-D'.format(num_motors_d))
+            wheel_radius = 0.049 # 4.9 cm, taken from Dingo-D description
+            num_motors = num_motors_d
+        elif len(feedback_msg.drivers_feedback) == num_motors_o:
+            print('Receiving feedback from {} encoders. Dingo config: Dingo-O'.format(num_motors_o))
+            wheel_radius = 0.05 # 5 cm, taken from Dingo-O description
+            num_motors = num_motors_o
+        else: 
+            print('Invalid number of encoders detected. Make sure all encoders are publishing feedback.')
+            return
+
+        initial_encoder_angular_displacement = [0] * num_motors
+        encoder_angular_displacement = [0] * num_motors
+        encoder_linear_displacement = [0] * num_motors
+        encoder_linear_displacement_error = [0] * num_motors
+
+        for i, feedback in enumerate(feedback_msg.drivers_feedback, start=0):
+            initial_encoder_angular_displacement[i] = feedback.travel
+
+        print('Commanding Dingo to drive...')
+
+        # Drive for distance based on encoder-fused odometry data
+        while abs(odom_encoder_msg.pose.pose.position.x - initial_position_x) < desired_linear_displacement:
+            odom_encoder_linear_displacement = abs(odom_encoder_msg.pose.pose.position.x - initial_position_x)
+            pub.publish(cmd_vel_msg)
+            rate.sleep()
+
+        print('Completed drive')
+
+        odom_encoder_linear_displacement_error = abs((odom_encoder_linear_displacement - desired_linear_displacement) / desired_linear_displacement) * 100.0
+        print('Desired linear displacement (m): {}, Encoder-Fused Odometry linear displacement (m): {}, Relative error (%): {}'.format(desired_linear_displacement, odom_encoder_linear_displacement, odom_encoder_linear_displacement_error))
+
+        for i, feedback in enumerate(feedback_msg.drivers_feedback, start=0):
+            encoder_angular_displacement[i] = feedback.travel - initial_encoder_angular_displacement[i]
+            encoder_linear_displacement[i] = encoder_angular_displacement[i] * wheel_radius
+            encoder_linear_displacement_error[i] = abs((encoder_linear_displacement[i] - desired_linear_displacement) / desired_linear_displacement) * 100.0
+            print('Encoder #: {}, Desired linear displacement (m): {}, Encoder linear displacement (m): {}, Relative error (%): {}'.format(i, desired_linear_displacement, encoder_linear_displacement[i], encoder_linear_displacement_error[i]))
+
+        time.sleep(response_delay)
+        results.append(userInputTestResults('Did Dingo drive straight 1 metre?', 'Visual Test'))
+        printTestResults('Drive Test', results)
+        return True
+    elif response == 'n' or response == 'N':
+        print('Please ensure that Dingo is on the ground, E-Stop disengaged, and a 2 metre safety clearance infront of Dingo is provided before running the Drive Test')
+        results.append(notApplicableTestResult())
+        printTestResults('Drive Test', results)
+        return False
+    else:
+        print('Invalid input')
+        return False
+
+if __name__ == '__main__':
+    rospy.init_node('dingo_ros_tests')
+
+    print('Running Dingo ROS tests...\n')
+
+    tester = Tester()
+
+    tester.addTest('Lighting Test', lightingTest)
+    tester.addTest('Cooling Test', coolingTest)
+    tester.addTest('E-Stop Test', eStopTest)
+    tester.addTest('ADC Test', adcTest)
+    tester.addTest('Rotate Test', rotateTest)
+    tester.addTest('Drive Test', driveTest)
+
+    tester.run()
