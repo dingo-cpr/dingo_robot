@@ -34,10 +34,15 @@ def generate_launch_description():
 		launch_arguments={'physical_robot' : 'true'}.items()
 	)
 
-	ld = LaunchDescription()
+	start_teleop_control = IncludeLaunchDescription(
+		PythonLaunchDescriptionSource(os.path.join(
+			get_package_share_directory('dingo_control'), 'launch', 'teleop.launch.py')),
+		launch_arguments={'physical_robot' : 'true'}.items()
+	)
 
-	# Add any conditioned actions
+	ld = LaunchDescription()
 	ld.add_action(description_cmd)
 	ld.add_action(start_dingo_control)
+	ld.add_action(start_teleop_control)
 
 	return ld
