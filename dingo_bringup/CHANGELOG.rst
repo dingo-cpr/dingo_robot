@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.5 (2022-01-16)
+------------------
 * Add "_secondary" suffix to secondary laser node
   "RLException: roslaunch file contains multiple nodes named [/hokuyo]." is thrown if primary and secondary lasers are both enabled. This is because both envars launch an instance of the urg_node with the same name "hokuyo". Adding a "_secondary" suffix to the secondary laser node resolves this issue.
 * Contributors: jyang-cpr

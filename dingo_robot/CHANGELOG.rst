@@ -2,8 +2,8 @@
 Changelog for package dingo_robot
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.5 (2022-01-16)
+------------------
 * Add dependency for dingo_tests
 * Contributors: jyang-cpr
 
