@@ -2,6 +2,11 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Update the scipy dependency to python3
+* Contributors: Chris Iverach-Brereton
+
 0.1.5 (2022-01-16)
 ------------------
 
