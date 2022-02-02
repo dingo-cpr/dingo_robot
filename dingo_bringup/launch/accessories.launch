@@ -43,7 +43,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
 
     <!-- LMS1xx node -->
     <group if="$(eval arg('lidar2_model') == 'lms1xx')">
-      <node pkg="lms1xx" name="lms1xx" type="LMS1xx_node">
+      <node pkg="lms1xx" name="lms1xx_secondary" type="LMS1xx_node">
         <param name="host" value="$(optenv DINGO_LASER_SECONDARY_HOST 192.168.131.21)" />
         <param name="frame_id" value="$(optenv DINGO_LASER_SECONDARY_MOUNT rear)_laser" />
         <remap from="scan" to="$(optenv DINGO_LASER_SECONDARY_TOPIC rear/scan)" />
@@ -52,7 +52,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
 
     <!-- UST10 node -->
     <group if="$(eval arg('lidar2_model') == 'ust10')">
-      <node pkg="urg_node" name="hokuyo" type="urg_node">
+      <node pkg="urg_node" name="hokuyo_secondary" type="urg_node">
         <param name="ip_address" value="$(optenv DINGO_LASER_SECONDARY_HOST 192.168.131.21)" />
         <param name="frame_id" value="$(optenv DINGO_LASER_SECONDARY_MOUNT rear)_laser" />
         <remap from="scan" to="$(optenv DINGO_LASER_SECONDARY_TOPIC rear/scan)" />
