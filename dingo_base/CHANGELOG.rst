@@ -2,6 +2,9 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.2.0 (2022-01-19)
 ------------------
 * Update the scipy dependency to python3
