@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.1 (2022-03-21)
+------------------
 * [dingo_bringup] Updated install script to explicitly use Python3.
 * Switch usage of ifconfig (net-tools) to ip (iproute2) (`#12 <https://github.com/dingo-cpr/dingo_robot/issues/12>`_)
   * Switch usage of ifconfig (net-tools) to ip (iproute2)
