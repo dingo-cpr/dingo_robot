@@ -65,13 +65,20 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     By default this is a Velodyne VLP16 but can be changed with the
     DINGO_LASER_3D_MODEL environment variable. Valid model designations are:
     - vlp16 (default)     :: Velodyne VLP-16
+    - hdl32e              :: Velodyne HDL32E
   -->
   <group if="$(optenv DINGO_LASER_3D 0)">
     <arg name="lidar_3d_model" value="$(optenv DINGO_LASER_3D_MODEL vlp16)" />
-
-    <!-- VLP16 node -->
+    <!-- VLP16 -->
     <group if="$(eval arg('lidar_3d_model') == 'vlp16')">
       <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch">
+        <arg name="device_ip" value="$(optenv DINGO_LASER_3D_HOST 192.168.131.20)" />
+        <remap from="velodyne_points" to="$(optenv DINGO_LASER_3D_TOPIC front/points)" />
+      </include>
+    </group>
+    <!-- HDL32E -->
+    <group if="$(eval arg('lidar_3d_model') == 'hdl32e')">
+      <include file="$(find velodyne_pointcloud)/launch/32e_points.launch">
         <arg name="device_ip" value="$(optenv DINGO_LASER_3D_HOST 192.168.131.20)" />
         <remap from="velodyne_points" to="$(optenv DINGO_LASER_3D_TOPIC front/points)" />
       </include>
@@ -202,6 +209,16 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
       <arg name="calib_odom_file"          value="$(arg calib_odom_file)"/>
       <arg name="publish_odom_tf"          value="$(arg publish_odom_tf)"/>
       <arg name="allow_no_texture_points"  value="$(arg allow_no_texture_points)"/>
+    </include>
+  </group>
+
+  <!-- Microstrain IMU: GX3, GX5, GX25, etc. -->
+  <group if="$(optenv DINGO_IMU_MICROSTRAIN 0)">
+    <include file="$(find ros_mscl)/launch/microstrain.launch">
+      <arg name="name"          value="$(optenv DINGO_IMU_MICROSTRAIN_NAME microstrain)" />
+      <arg name="imu_frame_id"  value="$(optenv DINGO_IMU_MICROSTRAIN_LINK microstrain_link)" />
+      <arg name="port"          value="$(optenv DINGO_IMU_MICROSTRAIN_PORT /dev/microstrain)" />
+      <arg name="use_enu_frame" value="true" />
     </include>
   </group>
 </launch>
