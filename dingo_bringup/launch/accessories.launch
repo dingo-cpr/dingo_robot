@@ -88,8 +88,6 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     - l515
   -->
   <group if="$(optenv DINGO_REALSENSE 0)" ns="$(optenv DINGO_REALSENSE_TOPIC realsense)">
-    <arg name="rs_model" value="$(optenv DINGO_REALSENSE_MODEL d435)" />
-
     <arg name="serial_no"           default=""/>
     <arg name="usb_port_id"         default=""/>
     <arg name="device_type"         default=""/>
