@@ -94,12 +94,12 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     - d455
     - l515
   -->
-  <group if="$(optenv DINGO_REALSENSE 0)" ns="$(optenv DINGO_REALSENSE_TOPIC realsense)">
+  <group if="$(optenv DINGO_REALSENSE 0)">
     <arg name="serial_no"           default=""/>
     <arg name="usb_port_id"         default=""/>
     <arg name="device_type"         default=""/>
     <arg name="json_file_path"      default=""/>
-    <arg name="camera"              default="realsense"/>
+    <arg name="camera"              default="$(optenv DINGO_REALSENSE_TOPIC realsense)"/>
     <arg name="tf_prefix"           default="$(arg camera)"/>
     <arg name="external_manager"    default="false"/>
     <arg name="manager"             default="realsense2_camera_manager"/>
