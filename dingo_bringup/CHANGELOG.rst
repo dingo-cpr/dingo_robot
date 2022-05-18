@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.6 (2022-05-17)
+------------------
 * Fix realsense double namespace error
 * Update realsense launch file based on changes from realsense2_camera
 * Remove unused rs_model argument
