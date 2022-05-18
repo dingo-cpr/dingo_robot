@@ -2,6 +2,17 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix realsense double namespace error
+* Updated Bringup (`#14 <https://github.com/dingo-cpr/dingo_robot/issues/14>`_)
+  * Added Velodyne HDL32E and Microstrain GX5
+  * Added ros_mscl as run_depend in package.xml
+  * Alphabetically sort package.xml
+* Update realsense launch file based on changes from realsense2_camera
+* Remove unused rs_model argument
+* Contributors: Joey Yang, luis-camero
+
 0.2.1 (2022-03-21)
 ------------------
 * [dingo_bringup] Updated install script to explicitly use Python3.
