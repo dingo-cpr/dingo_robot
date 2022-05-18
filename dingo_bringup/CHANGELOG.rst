@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.2 (2022-05-17)
+------------------
 * Fix realsense double namespace error
 * Updated Bringup (`#14 <https://github.com/dingo-cpr/dingo_robot/issues/14>`_)
   * Added Velodyne HDL32E and Microstrain GX5
