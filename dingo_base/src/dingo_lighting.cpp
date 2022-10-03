@@ -83,6 +83,9 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   patterns_.stopped.push_back(boost::assign::list_of(Red_H)(Red_H)(Red_H)(Red_H));
   patterns_.stopped.push_back(boost::assign::list_of(Off)(Off)(Off)(Off));
 
+  patterns_.shore_power.push_back(boost::assign::list_of(Blue_H)(Blue_H)(Blue_H)(Blue_H));
+  patterns_.shore_power.push_back(boost::assign::list_of(Off)(Off)(Off)(Off));
+
   patterns_.fault.push_back(boost::assign::list_of(Orange_H)(Orange_H)(Orange_H)(Orange_H));
   patterns_.fault.push_back(boost::assign::list_of(Off)(Off)(Off)(Off));
 
@@ -153,6 +156,7 @@ void DingoLighting::timerCallback(const ros::TimerEvent&)
   {
     case State::Idle:
     case State::Driving:
+    case State::ShorePower:
       allow_user_ = true;
       break;
     case State::LowBattery:
@@ -203,24 +207,28 @@ void DingoLighting::updateState()
     state_ = State::Fault;
   }
   else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )  // SLA battery & voltage is low
-  {
-    state_ = State::LowBattery;
-  }
-  else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
            mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT )  // SLA battery & voltage over-volt
   {
     state_ = State::Fault;
   }
   else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT )  // Li battery & charge is low
+           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )  // Li battery & voltage over-volt
+  {
+    state_ = State::Fault;
+  }
+  else if (mcu_status_msg_.shore_power_connected) // Shore Power connected
+  {
+    state_ = State::ShorePower;
+  }
+  else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
+           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )  // SLA battery & voltage is low
   {
     state_ = State::LowBattery;
   }
   else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT )  // Li battery & voltage over-volt
+           battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT )  // Li battery & charge is low
   {
-    state_ = State::Fault;
+    state_ = State::LowBattery;
   }
   else if (cmd_vel_msg_.linear.x != 0.0 ||
            cmd_vel_msg_.linear.y != 0.0 ||
@@ -284,6 +292,13 @@ void DingoLighting::updatePattern()
         current_pattern_count_ = 0;
       }
       memcpy(&current_pattern_, &patterns_.idle[current_pattern_count_], sizeof(current_pattern_));
+      break;
+    case State::ShorePower:
+      if (current_pattern_count_ >= patterns_.shore_power.size())
+      {
+        current_pattern_count_ = 0;
+      }
+      memcpy(&current_pattern_, &patterns_.shore_power[current_pattern_count_], sizeof(current_pattern_));
       break;
   }
   old_state_ = state_;

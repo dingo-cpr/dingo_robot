@@ -64,7 +64,8 @@ public:
     LowBattery,
     NeedsReset,
     Fault,
-    Stopped
+    Stopped,
+    ShorePower,
   };
 
   /** Initialize ROS communication, set up timers, and initialize lighting
@@ -144,6 +145,7 @@ private:
     LightsPatterns low_battery;
     LightsPatterns driving;
     LightsPatterns idle;
+    LightsPatterns shore_power;
   }
   patterns_;
 
