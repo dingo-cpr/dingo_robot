@@ -33,7 +33,7 @@
 #ifndef DINGO_BASE_DINGO_LIGHTING_H
 #define DINGO_BASE_DINGO_LIGHTING_H
 
-#include<vector>
+#include <vector>
 
 #include "ros/ros.h"
 
@@ -46,7 +46,7 @@
 namespace dingo_base
 {
 
-typedef boost::array<uint32_t, 8> pattern;
+typedef std::array<uint32_t, 4> pattern;
 typedef std::vector<pattern> LightsPatterns;
 
 /** This class controls the 4 corner lights on Dingo. The lighting values
@@ -63,9 +63,12 @@ public:
     Driving,
     LowBattery,
     NeedsReset,
-    Fault,
+    BatteryFault,
+    ShoreFault,
+    PumaFault,
     Stopped,
     ShorePower,
+    Charging
   };
 
   /** Initialize ROS communication, set up timers, and initialize lighting
@@ -111,6 +114,9 @@ private:
   /** Used to trigger a periodic callback to update/publish state */
   ros::Timer pub_timer_;
 
+  /** Period of pub timer */
+  double pub_period_;
+
   /** Used to track if lighting state has been published recently */
   ros::Timer user_timeout_;
 
@@ -140,12 +146,15 @@ private:
   struct patterns
   {
     LightsPatterns stopped;
-    LightsPatterns fault;
+    LightsPatterns battery_fault;
+    LightsPatterns shore_power_fault;
+    LightsPatterns puma_fault;
     LightsPatterns reset;
     LightsPatterns low_battery;
     LightsPatterns driving;
     LightsPatterns idle;
     LightsPatterns shore_power;
+    LightsPatterns manual_charging;
   }
   patterns_;
 
@@ -200,6 +209,17 @@ private:
    *  lighting messages, indicating that state-based lighting should be used.
    */
   void userTimeoutCallback(const ros::TimerEvent&);
+
+  dingo_base::LightsPatterns solidPattern(dingo_base::pattern pattern);
+
+  dingo_base::LightsPatterns pulsePattern(dingo_base::pattern colour_l,
+                                          dingo_base::pattern colour_h,
+                                          double duration);
+
+  dingo_base::LightsPatterns blinkPattern(dingo_base::pattern first,
+                                          dingo_base::pattern second,
+                                          double duration,
+                                          double duty_cycle);
 };
 
 }  // namespace dingo_base
