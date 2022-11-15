@@ -46,7 +46,9 @@
 namespace dingo_base
 {
 
-typedef std::array<uint32_t, 4> pattern;
+static constexpr uint8_t NUM_LEDS = 4;
+
+typedef std::array<uint32_t, NUM_LEDS> pattern;
 typedef std::vector<pattern> LightsPatterns;
 
 /** This class controls the 4 corner lights on Dingo. The lighting values
@@ -59,16 +61,16 @@ public:
   /** The set of states for which different lighting is provided */
   enum class State
   {
-    Idle = 0,
-    Driving,
-    LowBattery,
-    NeedsReset,
-    BatteryFault,
+    BatteryFault = 0,
     ShoreFault,
     PumaFault,
-    Stopped,
     ShorePower,
-    Charging
+    Charging,
+    Stopped,
+    NeedsReset,
+    LowBattery,
+    Driving,
+    Idle
   };
 
   /** Initialize ROS communication, set up timers, and initialize lighting
@@ -171,6 +173,7 @@ private:
   void setLights(dingo_msgs::Lights* lights, uint32_t pattern[4]);
 
   /** Updates the current lighting state based on all inputs */
+  void setState(DingoLighting::State new_state);
   void updateState();
 
   /** Updates the current lighting pattern based on the current state */

@@ -45,21 +45,19 @@ namespace Colours
   static const uint32_t Red_L = 0x550000;
   static const uint32_t Green_H = 0x00FF00;
   static const uint32_t Green_M = 0x00AA00;
-  static const uint32_t Green_L = 0x005500;
+  static const uint32_t Green_L = 0x001100;
   static const uint32_t Blue_H = 0x0000FF;
-  static const uint32_t Blue_MH = 0x0000CC;
   static const uint32_t Blue_M = 0x0000AA;
-  static const uint32_t Blue_ML = 0x000088;
   static const uint32_t Blue_L = 0x000011;
   static const uint32_t Yellow_H = 0xFFFF00;
   static const uint32_t Yellow_M = 0xAAAA00;
-  static const uint32_t Yellow_L = 0x555500;
-  static const uint32_t Orange_H = 0xFFAE00;
-  static const uint32_t Orange_M = 0xF0A80E;
-  static const uint32_t Orange_L = 0xD69F27;
+  static const uint32_t Yellow_L = 0x111100;
+  static const uint32_t Orange_H = 0xFF8C00;
+  static const uint32_t Orange_M = 0xAA5D00;
+  static const uint32_t Orange_L = 0x552D00;
   static const uint32_t White_H = 0xFFFFFF;
   static const uint32_t White_M = 0xAAAAAA;
-  static const uint32_t White_L = 0x555555;
+  static const uint32_t White_L = 0x111111;
 }  // namespace Colours
 
 DingoLighting::DingoLighting(ros::NodeHandle* nh) :
@@ -86,36 +84,36 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   auto off_pattern = pattern{Off, Off, Off, Off};
 
   patterns_.battery_fault = blinkPattern(
-    pattern{Orange_H, Orange_H, Orange_H, Orange_H},
-    off_pattern, 2.0, 0.5);
+    pattern{Yellow_H, Yellow_H, Yellow_H, Yellow_H},
+    pattern{Red_H, Red_H, Red_H, Red_H}, 2.0, 0.5);
+
+  patterns_.shore_power_fault = blinkPattern(
+    pattern{Blue_H, Blue_H, Blue_H, Blue_H},
+    pattern{Red_H, Red_H, Red_H, Red_H}, 2.0, 0.5);
+
+  patterns_.puma_fault = blinkPattern(
+    pattern{Red_H, Red_H, Red_H, Red_H},
+    pattern{Red_H, Red_H, Red_H, Red_H}, 1.0, 0.5);
 
   patterns_.shore_power = pulsePattern(
     pattern{Blue_L, Blue_L, Blue_L, Blue_L},
     pattern{Blue_H, Blue_H, Blue_H, Blue_H}, 4.0);
 
-  patterns_.shore_power_fault = blinkPattern(
-    pattern{Blue_L, Blue_L, Blue_L, Blue_L},
-    off_pattern, 2.0, 0.5);
-
-  patterns_.puma_fault = blinkPattern(
-    pattern{Yellow_H, Yellow_H, Yellow_H, Yellow_H},
-    off_pattern, 2.0, 0.5);
+  patterns_.manual_charging = pulsePattern(
+    pattern{Red_L, Red_L, Red_L, Red_L},
+    pattern{Red_H, Red_H, Red_H, Red_H}, 4.0);
 
   patterns_.stopped = blinkPattern(
     pattern{Red_H, Red_H, Red_H, Red_H},
     off_pattern, 2.0, 0.5);
-
-  patterns_.manual_charging = pulsePattern(
-    pattern{Green_L, Green_L, Green_L, Green_L},
-    pattern{Green_H, Green_H, Green_H, Green_H}, 4.0);
 
   patterns_.reset = blinkPattern(
     pattern{Off, Red_H, Off, Red_H},
     pattern{Red_H, Off, Red_H, Off}, 2.0, 0.5);
 
   patterns_.low_battery = pulsePattern(
-    pattern{Orange_L, Orange_L, Orange_L, Orange_L},
-    pattern{Orange_H, Orange_H, Orange_H, Orange_H}, 4.0);
+    pattern{Yellow_L, Yellow_L, Yellow_L, Yellow_L},
+    pattern{Yellow_H, Yellow_H, Yellow_H, Yellow_H}, 4.0);
 
   patterns_.driving = solidPattern(pattern{Red_M, White_M, White_M, Red_M});
 
@@ -162,7 +160,7 @@ dingo_base::LightsPatterns DingoLighting::pulsePattern(dingo_base::pattern colou
                                                        double duration)
 {
   LightsPatterns lights_pattern;
-  pattern increment;
+  std::array<dingo_msgs::RGB, NUM_LEDS> increment;
   uint32_t steps = static_cast<uint32_t>(duration / pub_period_);
 
   if (duration <= pub_period_)
@@ -171,10 +169,20 @@ dingo_base::LightsPatterns DingoLighting::pulsePattern(dingo_base::pattern colou
   }
   else
   {
-    for (uint8_t i=0; i < colour_l.size(); i++)
+    dingo_msgs::RGB rgb_l, rgb_h;
+
+    for (uint8_t i=0; i < NUM_LEDS; i++)
     {
-      increment[i] = static_cast<uint32_t>(
-        std::ceil(static_cast<double>(colour_h[i] - colour_l[i]) / (steps / 2)));
+      setRGB(&rgb_l, colour_l[i]);
+      setRGB(&rgb_h, colour_h[i]);
+      increment[i].red = static_cast<uint8_t>(
+        std::round(static_cast<double>(rgb_h.red - rgb_l.red) / (steps / 2)));
+
+      increment[i].green = static_cast<uint8_t>(
+        std::round(static_cast<double>(rgb_h.green - rgb_l.green) / (steps / 2)));
+
+      increment[i].blue = static_cast<uint8_t>(
+        std::round(static_cast<double>(rgb_h.blue - rgb_l.blue) / (steps / 2)));
     }
 
     for (uint32_t i = 0; i < steps / 2; i++)
@@ -182,7 +190,10 @@ dingo_base::LightsPatterns DingoLighting::pulsePattern(dingo_base::pattern colou
       pattern step_pattern;
       for (uint8_t j=0; j < colour_l.size(); j++)
       {
-        step_pattern[j] = colour_l[j] + i * increment[j];
+        step_pattern[j] = colour_l[j] + i * (
+          increment[j].red << 16 |
+          increment[j].green << 8 |
+          increment[j].blue);
       }
       lights_pattern.push_back(step_pattern);
     }
@@ -192,7 +203,10 @@ dingo_base::LightsPatterns DingoLighting::pulsePattern(dingo_base::pattern colou
       pattern step_pattern;
       for (uint8_t j=0; j < colour_h.size(); j++)
       {
-        step_pattern[j] = colour_h[j] - i * increment[j];
+        step_pattern[j] = colour_h[j] - i * (
+          increment[j].red << 16 |
+          increment[j].green << 8 |
+          increment[j].blue);
       }
       lights_pattern.push_back(step_pattern);
     }
@@ -282,73 +296,93 @@ void DingoLighting::userTimeoutCallback(const ros::TimerEvent&)
   user_publishing_ = false;
 }
 
+void DingoLighting::setState(DingoLighting::State new_state)
+{
+  if (new_state < state_)
+  {
+    state_ = new_state;
+  }
+}
+
 void DingoLighting::updateState()
 {
-  if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-      mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT &&
-      mcu_status_msg_.shore_power_connected == false)  // SLA battery & voltage over-volt
+  state_ = State::Idle;
+  // Shore power connected
+  if (mcu_status_msg_.shore_power_connected == true)
   {
-    state_ = State::BatteryFault;
+    // Shore power overvoltage detected on MCU, or VSys >= 16.0V
+    if (mcu_status_msg_.shore_power_ov ||
+        mcu_status_msg_.measured_battery >= dingo_power::SHORE_POWER_OVER_VOLT)
+    {
+      setState(State::ShoreFault);
+    }
+    else
+    {
+      setState(State::ShorePower);
+    }
   }
-  else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           battery_state_msg_.voltage >= dingo_power::BATTERY_LITHIUM_OVER_VOLT &&
-           mcu_status_msg_.shore_power_connected == false)  // Li battery & voltage over-volt
+  else
   {
-    state_ = State::BatteryFault;
+    // SLA battery
+    if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN)
+    {
+      if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT)
+      {
+        setState(State::BatteryFault);
+      }
+      else if (mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)
+      {
+        setState(State::LowBattery);
+      }
+    }
+    else // Li Battery
+    {
+      if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_LITHIUM_OVER_VOLT)
+      {
+        setState(State::BatteryFault);
+      }
+      else if (battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT)
+      {
+        setState(State::LowBattery);
+      }
+    }
   }
-  else if (mcu_status_msg_.shore_power_ov)
+
+  // Puma faults
+  pattern puma_indicator = {Colours::Red_H, Colours::Red_H, Colours::Red_H, Colours::Red_H};
+  for (size_t i = 0; i < pumas_status_msg_.drivers.size(); i++)
   {
-    state_ = State::ShoreFault;
+    if (pumas_status_msg_.drivers[i].fault != 0)
+    {
+      puma_indicator[(i + 1) % NUM_LEDS] = Colours::Off;
+      setState(State::PumaFault);
+    }
   }
-  else if (pumas_status_msg_.drivers.size() == 2 &&  // Dingo-D
-          (pumas_status_msg_.drivers[0].fault != 0 ||
-           pumas_status_msg_.drivers[1].fault != 0))
+
+  if (state_ == State::PumaFault)
   {
-    state_ = State::PumaFault;
+    patterns_.puma_fault = blinkPattern(
+      puma_indicator,
+      {Colours::Red_H, Colours::Red_H, Colours::Red_H, Colours::Red_H}, 2.0, 0.5);
   }
-  else if (pumas_status_msg_.drivers.size() == 4 &&  // Dingo-O
-          (pumas_status_msg_.drivers[0].fault != 0 ||
-           pumas_status_msg_.drivers[1].fault != 0 ||
-           pumas_status_msg_.drivers[2].fault != 0 ||
-           pumas_status_msg_.drivers[3].fault != 0))
+
+  if (mcu_status_msg_.manual_charger_connected) // Manual charger connected
   {
-    state_ = State::PumaFault;
+    setState(State::Charging);
   }
-  else if (mcu_status_msg_.shore_power_connected) // Shore Power connected
+  else if (mcu_status_msg_.stop_engaged == true) // E-Stop
   {
-    state_ = State::ShorePower;
+    setState(State::Stopped);
   }
-  else if (mcu_status_msg_.manual_charger_connected) // Manual charger connected
+  else if (mcu_status_msg_.drivers_active == false) // Needs Reset
   {
-    state_ = State::Charging;
-  }
-  else if (mcu_status_msg_.stop_engaged == true)
-  {
-    state_ = State::Stopped;
-  }
-  else if (mcu_status_msg_.drivers_active == false)
-  {
-    state_ = State::NeedsReset;
-  }
-  else if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT )  // SLA battery & voltage is low
-  {
-    state_ = State::LowBattery;
-  }
-  else if (battery_state_msg_.power_supply_technology != sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN &&
-           battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT )  // Li battery & charge is low
-  {
-    state_ = State::LowBattery;
+    setState(State::NeedsReset);
   }
   else if (cmd_vel_msg_.linear.x != 0.0 ||
            cmd_vel_msg_.linear.y != 0.0 ||
            cmd_vel_msg_.angular.z != 0.0)
   {
-    state_ = State::Driving;
-  }
-  else
-  {
-    state_ = State::Idle;
+    setState(State::Driving);
   }
 }
 
