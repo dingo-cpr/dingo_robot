@@ -11,6 +11,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>depth_image_proc</exec_depend>
   <exec_depend>dingo_base</exec_depend>
+  <exec_depend>flir_camera_driver</exec_depend>
   <exec_depend>lms1xx</exec_depend>
   <exec_depend>microstrain_inertial_driver</exec_depend>
   <exec_depend>realsense2_camera</exec_depend>
