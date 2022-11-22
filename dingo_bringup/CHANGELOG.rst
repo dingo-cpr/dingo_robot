@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.3 (2022-11-22)
+------------------
 * Added Blackfly Camera
 * Replace ros_mscl with microstrain_inertial_driver
 * Added secondary realsense

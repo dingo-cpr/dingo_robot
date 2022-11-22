@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>dingo_bringup</name>
-  <version>0.2.2</version>
+  <version>0.2.3</version>
   <description>Scripts for installing Dingo's robot software.</description>
 
   <maintainer email="tbaltovski@clearpathrobotics.com">Tony Baltovski</maintainer>
