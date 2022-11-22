@@ -97,7 +97,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <arg name="initial_reset"     default="false"/>
   <arg name="reconnect_timeout" default="6.0"/>
   <!-- Primary -->
-  <arg name="realsense_enable"                        default="$(optenv DINGO_REALSENSE_ENABLED 0)"/>
+  <arg name="realsense_enable"                        default="$(optenv DINGO_REALSENSE 0)"/>
   <arg name="realsense_serial"                        default="$(optenv DINGO_REALSENSE_SERIAL 0)"/> <!-- Serial No. -->
   <arg name="realsense_topic"                         default="$(optenv DINGO_REALSENSE_TOPIC realsense)"/> <!-- Namespace -->
   <arg name="realsense_pointcloud_enabled"            default="$(optenv DINGO_REALSENSE_POINTCLOUD_ENABLED 1)"/>
@@ -113,7 +113,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <arg name="realsense_tf_prefix"                     default="$(optenv DINGO_REALSENSE_PREFIX camera)"/>
 
   <!-- Secondary -->
-  <arg name="realsense_secondary_enable"              default="$(optenv DINGO_REALSENSE_SECONDARY_ENABLED 0)"/>
+  <arg name="realsense_secondary_enable"              default="$(optenv DINGO_REALSENSE_SECONDARY 0)"/>
   <arg name="realsense_secondary_serial"              default="$(optenv DINGO_REALSENSE_SECONDARY_SERIAL 0)"/> <!-- Serial No. -->
   <arg name="realsense_secondary_topic"               default="$(optenv DINGO_REALSENSE_SECONDARY_TOPIC realsense_secondary)"/> <!-- Namespace -->
   <arg name="realsense_secondary_pointcloud_enabled"  default="$(optenv DINGO_REALSENSE_SECONDARY_POINTCLOUD_ENABLED 1)"/>
@@ -169,6 +169,43 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
       <arg name="depth_fps"             value="$(arg realsense_secondary_depth_frames)"/>
       <!-- pointcloud -->
       <arg name="filters"               value="$(arg realsense_secondary_filters)"/>
+    </include>
+  </group>
+
+  <!-- 
+    FLIR BlackflyS
+  -->
+  <arg name="blackfly_enable" default="$(optenv DINGO_BLACKFLY 0)"/>
+  <arg name="blackfly_prefix" default="$(optenv DINGO_BLACKFLY_PREFIX blackfly)"/>
+  <arg name="blackfly_serial" default="$(optenv DINGO_BLACKFLY_SERIAL 0)"/>
+  <arg name="blackfly_device" default="$(optenv DINGO_BLACKFLY_DEVICE USB3)"/> <!-- USB3 or GigE-->
+  <arg name="blackfly_encode" default="$(optenv DINGO_BLACKFLY_ENCODING BayerRG8)"/>
+  <arg name="blackfly_frames" default="$(optenv DINGO_BLACKFLY_FRAMERATE 30)"/>
+
+  <arg name="blackfly_secondary_enable" default="$(optenv DINGO_BLACKFLY_SECONDARY 0)"/>
+  <arg name="blackfly_secondary_prefix" default="$(optenv DINGO_BLACKFLY_SECONDARY_PREFIX blackfly_secondary)"/>
+  <arg name="blackfly_secondary_serial" default="$(optenv DINGO_BLACKFLY_SECONDARY_SERIAL 0)"/>
+  <arg name="blackfly_secondary_device" default="$(optenv DINGO_BLACKFLY_SECONDARY_DEVICE USB3)"/> <!-- USB3 or GigE-->
+  <arg name="blackfly_secondary_encode" default="$(optenv DINGO_BLACKFLY_SECONDARY_ENCODING BayerRG8)"/>
+  <arg name="blackfly_secondary_frames" default="$(optenv DINGO_BLACKFLY_SECONDARY_FRAMERATE 30)"/>
+
+  <group if="$(arg blackfly_enable)">
+    <include file="$(find spinnaker_camera_driver)/launch/camera.launch">
+      <arg name="camera_name"   value="$(arg blackfly_prefix)"/>
+      <arg name="camera_serial" value="$(arg blackfly_serial)"/>
+      <arg name="device_type"   value="$(arg blackfly_device)"/>
+      <arg name="encoding"      value="$(arg blackfly_encode)"/>
+      <arg name="frame_rate"    value="$(arg blackfly_frames)"/>
+    </include>
+  </group>
+
+  <group if="$(arg blackfly_secondary_enable)">
+    <include file="$(find spinnaker_camera_driver)/launch/camera.launch">
+      <arg name="camera_name"   value="$(arg blackfly_secondary_prefix)"/>
+      <arg name="camera_serial" value="$(arg blackfly_secondary_serial)"/>
+      <arg name="device_type"   value="$(arg blackfly_secondary_device)"/>
+      <arg name="encoding"      value="$(arg blackfly_secondary_encode)"/>
+      <arg name="frame_rate"    value="$(arg blackfly_secondary_frames)"/>
     </include>
   </group>
 
