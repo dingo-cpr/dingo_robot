@@ -2,6 +2,13 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added Blackfly Camera
+* Replace ros_mscl with microstrain_inertial_driver
+* Added secondary realsense
+* Contributors: Joey Yang, Luis Camero
+
 0.2.2 (2022-05-17)
 ------------------
 * Fix realsense double namespace error
