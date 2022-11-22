@@ -101,7 +101,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <arg name="realsense_serial"                        default="$(optenv DINGO_REALSENSE_SERIAL 0)"/> <!-- Serial No. -->
   <arg name="realsense_topic"                         default="$(optenv DINGO_REALSENSE_TOPIC realsense)"/> <!-- Namespace -->
   <arg name="realsense_pointcloud_enabled"            default="$(optenv DINGO_REALSENSE_POINTCLOUD_ENABLED 1)"/>
-  <arg name="realsense_filters"                       default="$(eval 'pointcloud' if arg('pointcloud_enabled') else '')"/>
+  <arg name="realsense_filters"                       default="$(eval 'pointcloud' if arg('realsense_pointcloud_enabled') else '')"/>
   <arg name="realsense_depth_enabled"                 default="$(optenv DINGO_REALSENSE_DEPTH_ENABLED 1)"/>
   <arg name="realsense_depth_frames"                  default="$(optenv DINGO_REALSENSE_DEPTH_FRAMERATE 30)"/>
   <arg name="realsense_depth_height"                  default="$(optenv DINGO_REALSENSE_DEPTH_HEIGHT 480)"/>
@@ -117,7 +117,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <arg name="realsense_secondary_serial"              default="$(optenv DINGO_REALSENSE_SECONDARY_SERIAL 0)"/> <!-- Serial No. -->
   <arg name="realsense_secondary_topic"               default="$(optenv DINGO_REALSENSE_SECONDARY_TOPIC realsense_secondary)"/> <!-- Namespace -->
   <arg name="realsense_secondary_pointcloud_enabled"  default="$(optenv DINGO_REALSENSE_SECONDARY_POINTCLOUD_ENABLED 1)"/>
-  <arg name="realsense_secondary_filters"             default="$(eval 'pointcloud' if arg('secondary_pointcloud_enabled') else '')"/>
+  <arg name="realsense_secondary_filters"             default="$(eval 'pointcloud' if arg('realsense_secondary_pointcloud_enabled') else '')"/>
   <arg name="realsense_secondary_depth_enabled"       default="$(optenv DINGO_REALSENSE_SECONDARY_DEPTH_ENABLED 1)"/>
   <arg name="realsense_secondary_depth_frames"        default="$(optenv DINGO_REALSENSE_SECONDARY_DEPTH_FRAMERATE 30)"/>
   <arg name="realsense_secondary_depth_height"        default="$(optenv DINGO_REALSENSE_SECONDARY_DEPTH_HEIGHT 480)"/>
