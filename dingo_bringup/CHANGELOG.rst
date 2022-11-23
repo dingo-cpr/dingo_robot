@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.2.4 (2022-11-23)
+------------------
 * Fixed point_cloud parameter
 * Contributors: Luis Camero
 
