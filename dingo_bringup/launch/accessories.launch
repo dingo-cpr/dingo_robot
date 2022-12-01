@@ -214,12 +214,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     <include file="$(find microstrain_inertial_driver)/launch/microstrain.launch">
       <arg name="namespace"              value="$(optenv DINGO_IMU_MICROSTRAIN_NAME microstrain)" />
       <arg name="node_name"              value="microstrain_inertial_driver" />
-      <arg name="params_file"            value="" />
-      <arg name="port"                   value="$(optenv DINGO_IMU_MICROSTRAIN_PORT /dev/microstrain_main)" />
-      <arg name="aux_port"               value="$(optenv DINGO_IMU_MICROSTRAIN_PORT /dev/microstrain_main)" />
-      <arg name="baudrate"               value="$(optenv DINGO_IMU_MICROSTRAIN_BAUDRATE 115200)" />
-      <arg name="imu_frame_id"           value="$(optenv DINGO_IMU_MICROSTRAIN_LINK microstrain_link)" />
-      <arg name="use_enu_frame"          value="true" />
+      <arg name="params_file"            value="$(find dingo_bringup)/config/microstrain.yaml" />
     </include>
   </group>
 </launch>
