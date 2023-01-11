@@ -100,8 +100,8 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
     pattern{Blue_H, Blue_H, Blue_H, Blue_H}, 4.0);
 
   patterns_.manual_charging = pulsePattern(
-    pattern{Red_L, Red_L, Red_L, Red_L},
-    pattern{Red_H, Red_H, Red_H, Red_H}, 4.0);
+    pattern{Green_L, Green_L, Green_L, Green_L},
+    pattern{Green_H, Green_H, Green_H, Green_H}, 4.0);
 
   patterns_.stopped = blinkPattern(
     pattern{Red_H, Red_H, Red_H, Red_H},
