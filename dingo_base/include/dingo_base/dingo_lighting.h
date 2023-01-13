@@ -64,6 +64,7 @@ public:
     BatteryFault = 0,
     ShoreFault,
     PumaFault,
+    ShoreAndCharging,
     ShorePower,
     Charging,
     Stopped,
@@ -71,6 +72,13 @@ public:
     LowBattery,
     Driving,
     Idle
+  };
+
+  std::map<std::string, uint8_t> motor_to_led = {
+    {"front_left_wheel", dingo_msgs::Lights::LIGHTS_FRONT_LEFT},
+    {"front_right_wheel", dingo_msgs::Lights::LIGHTS_FRONT_RIGHT},
+    {"rear_left_wheel", dingo_msgs::Lights::LIGHTS_REAR_LEFT},
+    {"rear_right_wheel", dingo_msgs::Lights::LIGHTS_REAR_RIGHT}
   };
 
   /** Initialize ROS communication, set up timers, and initialize lighting
@@ -157,6 +165,7 @@ private:
     LightsPatterns idle;
     LightsPatterns shore_power;
     LightsPatterns manual_charging;
+    LightsPatterns shore_and_charging;
   }
   patterns_;
 

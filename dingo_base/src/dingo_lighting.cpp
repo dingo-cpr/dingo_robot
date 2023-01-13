@@ -74,7 +74,7 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   mcu_status_sub_ = nh_->subscribe("mcu/status", 1, &DingoLighting::mcuStatusCallback, this);
   battery_state_sub_ = nh_->subscribe("battery/status", 1, &DingoLighting::batteryStateCallback, this);
   puma_status_sub_ = nh_->subscribe("status", 1, &DingoLighting::pumaStatusCallback, this);
-  cmd_vel_sub_ = nh_->subscribe("cmd_vel", 1, &DingoLighting::cmdVelCallback, this);
+  cmd_vel_sub_ = nh_->subscribe("dingo_velocity_controller/cmd_vel", 1, &DingoLighting::cmdVelCallback, this);
 
   pub_timer_ = nh_->createTimer(ros::Duration(pub_period_), &DingoLighting::timerCallback, this);
   user_timeout_ = nh_->createTimer(ros::Duration(1.0/1), &DingoLighting::userTimeoutCallback, this);
@@ -95,17 +95,26 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
     pattern{Red_H, Red_H, Red_H, Red_H},
     pattern{Red_H, Red_H, Red_H, Red_H}, 1.0, 0.5);
 
-  patterns_.shore_power = pulsePattern(
-    pattern{Blue_L, Blue_L, Blue_L, Blue_L},
-    pattern{Blue_H, Blue_H, Blue_H, Blue_H}, 4.0);
-
-  patterns_.manual_charging = pulsePattern(
+  LightsPatterns green_pulse = pulsePattern(
     pattern{Green_L, Green_L, Green_L, Green_L},
     pattern{Green_H, Green_H, Green_H, Green_H}, 4.0);
 
+  LightsPatterns blue_pulse = pulsePattern(
+    pattern{Blue_L, Blue_L, Blue_L, Blue_L},
+    pattern{Blue_H, Blue_H, Blue_H, Blue_H}, 4.0);
+  
+  patterns_.shore_and_charging = green_pulse;
+  patterns_.shore_and_charging.insert(
+    std::end(patterns_.shore_and_charging),
+    std::begin(blue_pulse), std::end(blue_pulse));
+
+  patterns_.shore_power = blue_pulse;
+
+  patterns_.manual_charging = green_pulse;
+
   patterns_.stopped = blinkPattern(
-    pattern{Red_H, Red_H, Red_H, Red_H},
-    off_pattern, 2.0, 0.5);
+    pattern{Off, Red_H, Off, Red_H},
+    pattern{Red_H, Off, Red_H, Off}, 2.0, 0.5);
 
   patterns_.reset = blinkPattern(
     pattern{Off, Red_H, Off, Red_H},
@@ -352,9 +361,15 @@ void DingoLighting::updateState()
   pattern puma_indicator = {Colours::Red_H, Colours::Red_H, Colours::Red_H, Colours::Red_H};
   for (size_t i = 0; i < pumas_status_msg_.drivers.size(); i++)
   {
-    if (pumas_status_msg_.drivers[i].fault != 0)
+    // Puma FAULT_BRIDGE_DRIVER fault occurs when stop is engaged 
+    if (pumas_status_msg_.drivers[i].fault == puma_motor_msgs::Status::FAULT_BRIDGE_DRIVER && 
+        mcu_status_msg_.stop_engaged)
     {
-      puma_indicator[(i + 1) % NUM_LEDS] = Colours::Off;
+      continue;
+    }
+    else if (pumas_status_msg_.drivers[i].fault != 0)
+    {
+      puma_indicator[motor_to_led[pumas_status_msg_.drivers[i].device_name]] = Colours::Off;
       setState(State::PumaFault);
     }
   }
@@ -368,7 +383,14 @@ void DingoLighting::updateState()
 
   if (mcu_status_msg_.manual_charger_connected) // Manual charger connected
   {
-    setState(State::Charging);
+    if (mcu_status_msg_.shore_power_connected)
+    {
+      setState(State::ShoreAndCharging);
+    }
+    else
+    {
+      setState(State::Charging);
+    }
   }
   else if (mcu_status_msg_.stop_engaged == true) // E-Stop
   {
@@ -426,6 +448,9 @@ void DingoLighting::updatePattern()
       break;
     case State::Charging:
       new_pattern = patterns_.manual_charging;
+      break;
+    case State::ShoreAndCharging:
+      new_pattern = patterns_.shore_and_charging;
       break;
   }
 
