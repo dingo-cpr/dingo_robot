@@ -95,22 +95,17 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
     pattern{Red_H, Red_H, Red_H, Red_H},
     pattern{Red_H, Red_H, Red_H, Red_H}, 1.0, 0.5);
 
-  LightsPatterns green_pulse = pulsePattern(
-    pattern{Green_L, Green_L, Green_L, Green_L},
-    pattern{Green_H, Green_H, Green_H, Green_H}, 4.0);
+  patterns_.shore_and_charging = pulsePattern(
+    pattern{Green_M, Green_M, Green_M, Green_M},
+    pattern{Blue_M, Blue_M, Blue_M, Blue_M}, 8.0);
 
-  LightsPatterns blue_pulse = pulsePattern(
+  patterns_.shore_power = pulsePattern(
     pattern{Blue_L, Blue_L, Blue_L, Blue_L},
-    pattern{Blue_H, Blue_H, Blue_H, Blue_H}, 4.0);
-  
-  patterns_.shore_and_charging = green_pulse;
-  patterns_.shore_and_charging.insert(
-    std::end(patterns_.shore_and_charging),
-    std::begin(blue_pulse), std::end(blue_pulse));
+    pattern{Blue_M, Blue_M, Blue_M, Blue_M}, 4.0);
 
-  patterns_.shore_power = blue_pulse;
-
-  patterns_.manual_charging = green_pulse;
+  patterns_.manual_charging = pulsePattern(
+    pattern{Green_L, Green_L, Green_L, Green_L},
+    pattern{Green_M, Green_M, Green_M, Green_M}, 4.0);
 
   patterns_.stopped = blinkPattern(
     pattern{Off, Red_H, Off, Red_H},
@@ -169,8 +164,25 @@ dingo_base::LightsPatterns DingoLighting::pulsePattern(dingo_base::pattern colou
                                                        double duration)
 {
   LightsPatterns lights_pattern;
-  std::array<dingo_msgs::RGB, NUM_LEDS> increment;
+
+  // RGB values to increment by. Can be negative.
+  struct rgb_increment {
+    double red;
+    uint8_t red_decimal;
+
+    double green;
+    uint8_t green_decimal;
+
+    double blue;
+    uint8_t blue_decimal;
+  };
+
+  // RGB values to increment or decrement by.
+  std::array<rgb_increment, NUM_LEDS> increment;
+  // Number of steps to complete entire pattern
   uint32_t steps = static_cast<uint32_t>(duration / pub_period_);
+  // Number of steps to reach from colour_l to colour_h
+  uint32_t incr_steps = steps / 2;
 
   if (duration <= pub_period_)
   {
@@ -180,45 +192,68 @@ dingo_base::LightsPatterns DingoLighting::pulsePattern(dingo_base::pattern colou
   {
     dingo_msgs::RGB rgb_l, rgb_h;
 
+    // Calculate increment values for each step, as well as decimal point
+    // The decimal point is used to fix rounding errors in the increment
+    // E.g. If the increment is 2.8, we can increment by 3, 8 times, then 2, twice for every 10 steps.
+    // This averages to 2.8 over the duration of the pattern.
     for (uint8_t i=0; i < NUM_LEDS; i++)
     {
       setRGB(&rgb_l, colour_l[i]);
       setRGB(&rgb_h, colour_h[i]);
-      increment[i].red = static_cast<uint8_t>(
-        std::round(static_cast<double>(rgb_h.red - rgb_l.red) / (steps / 2)));
 
-      increment[i].green = static_cast<uint8_t>(
-        std::round(static_cast<double>(rgb_h.green - rgb_l.green) / (steps / 2)));
-
-      increment[i].blue = static_cast<uint8_t>(
-        std::round(static_cast<double>(rgb_h.blue - rgb_l.blue) / (steps / 2)));
+      // Red
+      increment[i].red = static_cast<double>((rgb_h.red - rgb_l.red)) / incr_steps;
+      increment[i].red_decimal = static_cast<uint8_t>(
+        (std::abs(increment[i].red) - std::floor(std::abs(increment[i].red))) * 10);
+      // Green
+      increment[i].green = static_cast<double>((rgb_h.green - rgb_l.green)) / incr_steps;
+      increment[i].green_decimal = static_cast<uint8_t>(
+        (std::abs(increment[i].green) - std::floor(std::abs(increment[i].green))) * 10);
+      // Blue
+      increment[i].blue = static_cast<double>((rgb_h.blue - rgb_l.blue)) / incr_steps;
+      increment[i].blue_decimal = static_cast<uint8_t>(
+        (std::abs(increment[i].blue) - std::floor(std::abs(increment[i].blue))) * 10);
     }
+    // Set lower colour as initial
+    lights_pattern.push_back(colour_l);
 
-    for (uint32_t i = 0; i < steps / 2; i++)
+    // Set patterns as we increment
+    for (uint32_t i = 0; i < steps / 2 - 1; i++)
     {
+      dingo_msgs::RGB step_rgb[NUM_LEDS];
       pattern step_pattern;
       for (uint8_t j=0; j < colour_l.size(); j++)
       {
-        step_pattern[j] = colour_l[j] + i * (
-          increment[j].red << 16 |
-          increment[j].green << 8 |
-          increment[j].blue);
-      }
-      lights_pattern.push_back(step_pattern);
-    }
+        setRGB(&step_rgb[j], lights_pattern[i][j]);
+        step_rgb[j].red += static_cast<int16_t>(increment[j].red);
+        step_rgb[j].green += static_cast<int16_t>(increment[j].green);
+        step_rgb[j].blue += static_cast<int16_t>(increment[j].blue);
 
-    for (uint32_t i = 0; i < steps - steps / 2; i++)
-    {
-      pattern step_pattern;
-      for (uint8_t j=0; j < colour_h.size(); j++)
-      {
-        step_pattern[j] = colour_h[j] - i * (
-          increment[j].red << 16 |
-          increment[j].green << 8 |
-          increment[j].blue);
+        // Increment by 1 more to account for decimal
+        if (increment[j].red_decimal > 0 && i % 10 < increment[j].red_decimal)
+        {
+          step_rgb[j].red += increment[j].red > 0 ? 1 : -1;
+        }
+        if (increment[j].green_decimal > 0 && i % 10 < increment[j].green_decimal)
+        {
+          step_rgb[j].green += increment[j].green > 0 ? 1 : -1;
+        }
+        if (increment[j].blue_decimal > 0 && i % 10 < increment[j].blue_decimal)
+        {
+          step_rgb[j].blue += increment[j].blue > 0 ? 1 : -1;
+        }
+        // Convert RGB to uint32_t
+        step_pattern[j] = step_rgb[j].red << 16 | step_rgb[j].green << 8 | step_rgb[j].blue;
       }
       lights_pattern.push_back(step_pattern);
     }
+    // End at high colour
+    lights_pattern.push_back(colour_h);
+
+    // Reverse increasing pattern and append to create pulse
+    LightsPatterns reverse = lights_pattern;
+    std::reverse(reverse.begin(), reverse.end());
+    lights_pattern.insert(std::end(lights_pattern), std::begin(reverse), std::end(reverse));
   }
   
   return lights_pattern;
