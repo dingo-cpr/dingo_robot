@@ -374,24 +374,34 @@ void DingoLighting::updateState()
   else
   {
     // SLA battery
-    if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN)
+    if (mcu_status_msg_.hardware_id == dingo_msgs::Status::HARDWARE_ID_D100)
     {
-      if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT)
+      if (battery_state_msg_.power_supply_technology == sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN)
       {
-        setState(State::BatteryFault);
+        if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_SLA_OVER_VOLT)
+        {
+          setState(State::BatteryFault);
+        }
+        else if (mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)
+        {
+          setState(State::LowBattery);
+        }
       }
-      else if (mcu_status_msg_.measured_battery <= dingo_power::BATTERY_SLA_LOW_VOLT)
+      else // Li Battery
       {
-        setState(State::LowBattery);
+        if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_LITHIUM_OVER_VOLT)
+        {
+          setState(State::BatteryFault);
+        }
+        else if (battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT)
+        {
+          setState(State::LowBattery);
+        }
       }
     }
-    else // Li Battery
+    else if (mcu_status_msg_.hardware_id == dingo_msgs::Status::HARDWARE_ID_D150)
     {
-      if (mcu_status_msg_.measured_battery >= dingo_power::BATTERY_LITHIUM_OVER_VOLT)
-      {
-        setState(State::BatteryFault);
-      }
-      else if (battery_state_msg_.percentage <= dingo_power::BATTERY_LITHIUM_LOW_PERCENT)
+      if (mcu_status_msg_.measured_battery <= dingo_power::BATTERY_D150_LOW_VOLT)
       {
         setState(State::LowBattery);
       }

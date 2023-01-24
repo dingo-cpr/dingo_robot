@@ -58,6 +58,10 @@ public:
   static constexpr float BATTERY_SLA_LOW_VOLT          = 12.0;
   static constexpr float BATTERY_SLA_CRITICAL_VOLT     = 11.8;
 
+  // D150 Battery warning levels
+  static constexpr float BATTERY_D150_LOW_VOLT          = 11.5;
+  static constexpr float BATTERY_D150_CRITICAL_VOLT     = 11.0;
+
   // Shore Power warning levels
   static constexpr float SHORE_POWER_OVER_VOLT         = 16.0;
 
