@@ -42,6 +42,7 @@
 #include "dingo_msgs/Status.h"
 #include "sensor_msgs/BatteryState.h"
 #include "puma_motor_msgs/MultiStatus.h"
+#include "std_msgs/Bool.h"
 
 namespace dingo_base
 {
@@ -109,6 +110,9 @@ private:
   /** Used to subscribe to velocity commands */
   ros::Subscriber cmd_vel_sub_;
 
+  /** Used to subscribe to wibotic charging status */
+  ros::Subscriber wibotic_sub_;
+
   /** The last received Puma status message */
   puma_motor_msgs::MultiStatus pumas_status_msg_;
 
@@ -120,6 +124,9 @@ private:
 
   /** The last received velocity command */
   geometry_msgs::Twist cmd_vel_msg_;
+
+  /** The last received wibotic charging message */
+  std_msgs::Bool wibotic_charging_msg_;
 
   /** Used to trigger a periodic callback to update/publish state */
   ros::Timer pub_timer_;
@@ -213,6 +220,11 @@ private:
    *  @param[in] status_msg The status message to be stored
    */
   void pumaStatusCallback(const puma_motor_msgs::MultiStatus::ConstPtr& status_msg);
+
+  /** Called when a Wibotic charging status message is received, for state updates.
+   *  @param[in] msg The status message to be stored
+   */
+  void wiboticChargingCallback(const std_msgs::Bool::ConstPtr& msg);
 
   /** Called periodically to update and publish the lighting pattern */
   void timerCallback(const ros::TimerEvent&);

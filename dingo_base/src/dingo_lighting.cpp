@@ -75,6 +75,7 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
   battery_state_sub_ = nh_->subscribe("battery/status", 1, &DingoLighting::batteryStateCallback, this);
   puma_status_sub_ = nh_->subscribe("status", 1, &DingoLighting::pumaStatusCallback, this);
   cmd_vel_sub_ = nh_->subscribe("dingo_velocity_controller/cmd_vel", 1, &DingoLighting::cmdVelCallback, this);
+  wibotic_sub_ = nh_->subscribe("wibotic_connector_can/charging", 1, &DingoLighting::wiboticChargingCallback, this);
 
   pub_timer_ = nh_->createTimer(ros::Duration(pub_period_), &DingoLighting::timerCallback, this);
   user_timeout_ = nh_->createTimer(ros::Duration(1.0/1), &DingoLighting::userTimeoutCallback, this);
@@ -304,6 +305,11 @@ void DingoLighting::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   cmd_vel_msg_ = *msg;
 }
 
+void DingoLighting::wiboticChargingCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+  wibotic_charging_msg_ = *msg;
+}
+
 void DingoLighting::timerCallback(const ros::TimerEvent&)
 {
   updateState();
@@ -416,7 +422,7 @@ void DingoLighting::updateState()
       {Colours::Red_H, Colours::Red_H, Colours::Red_H, Colours::Red_H}, 2.0, 0.5);
   }
 
-  if (mcu_status_msg_.manual_charger_connected) // Manual charger connected
+  if (mcu_status_msg_.manual_charger_connected || wibotic_charging_msg_.data) // Charger connected
   {
     if (mcu_status_msg_.shore_power_connected)
     {
