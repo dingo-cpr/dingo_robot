@@ -54,3 +54,10 @@ export DINGO_IMU_MICROSTRAIN_NAME='microstrain'
 export DINGO_IMU_MICROSTRAIN_LINK='microstrain_link'
 export DINGO_IMU_MICROSTRAIN_PORT='/dev/microstrain'
 ```
+
+#### Wibotic
+```bash
+export DINGO_WIBOTIC_CHARGER=0
+export DINGO_WIBOTIC_CHARGER_CAN='can0'
+export DINGO_WIBOTIC_CHARGER_ID='10'
+```
