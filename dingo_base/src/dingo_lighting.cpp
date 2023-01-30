@@ -113,12 +113,12 @@ DingoLighting::DingoLighting(ros::NodeHandle* nh) :
     pattern{Red_H, Off, Red_H, Off}, 2.0, 0.5);
 
   patterns_.reset = blinkPattern(
-    pattern{Off, Red_H, Off, Red_H},
-    pattern{Red_H, Off, Red_H, Off}, 2.0, 0.5);
+    pattern{Orange_H, Red_H, Orange_H, Red_H},
+    pattern{Red_H, Orange_H, Red_H, Orange_H}, 2.0, 0.5);
 
   patterns_.low_battery = pulsePattern(
-    pattern{Yellow_L, Yellow_L, Yellow_L, Yellow_L},
-    pattern{Yellow_H, Yellow_H, Yellow_H, Yellow_H}, 4.0);
+    pattern{Off, Off, Off, Off},
+    pattern{Orange_H, Orange_H, Orange_H, Orange_H}, 4.0);
 
   patterns_.driving = solidPattern(pattern{Red_M, White_M, White_M, Red_M});
 
