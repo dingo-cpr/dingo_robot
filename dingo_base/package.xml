@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>dingo_base</name>
-  <version>0.2.4</version>
+  <version>0.3.0</version>
   <description>Dingo's mobility and sensor base.</description>
 
   <maintainer email="tbaltovski@clearpathrobotics.com">Tony Baltovski</maintainer>

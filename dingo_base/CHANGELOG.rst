@@ -2,8 +2,8 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.0 (2023-01-30)
+------------------
 * Updated reset and low battery lighting patterns
 * Added D150 battery levels
 * Added Wibotic charging status to dingo_lighting

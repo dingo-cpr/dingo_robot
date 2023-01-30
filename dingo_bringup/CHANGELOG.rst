@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.0 (2023-01-30)
+------------------
 * Added Wibotic charging status to dingo_lighting
   Renamed PUMA can interface to vcan0
   Added Wibotic launch to accessories.launch
