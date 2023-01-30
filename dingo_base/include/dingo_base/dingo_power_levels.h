@@ -54,9 +54,16 @@ public:
   static constexpr float BATTERY_LITHIUM_CRITICAL_PERCENT = 0.10;  // 0-1
 
   // SLA battery warning levels
-  static constexpr float BATTERY_SLA_OVER_VOLT         = 13.6;
+  static constexpr float BATTERY_SLA_OVER_VOLT         = 15.0;
   static constexpr float BATTERY_SLA_LOW_VOLT          = 12.0;
   static constexpr float BATTERY_SLA_CRITICAL_VOLT     = 11.8;
+
+  // D150 Battery warning levels
+  static constexpr float BATTERY_D150_LOW_VOLT          = 11.5;
+  static constexpr float BATTERY_D150_CRITICAL_VOLT     = 11.0;
+
+  // Shore Power warning levels
+  static constexpr float SHORE_POWER_OVER_VOLT         = 16.0;
 
   // user-device power supply voltage warning levels
   static constexpr float USER_VOLT_12_LOW              = 11.0;

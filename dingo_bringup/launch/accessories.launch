@@ -217,4 +217,12 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
       <arg name="params_file"            value="$(find dingo_bringup)/config/microstrain.yaml" />
     </include>
   </group>
+
+  <!-- Wibotic wireless charger -->
+  <group if="$(optenv DINGO_WIBOTIC_CHARGER 0)">
+    <include file="$(find wibotic_connector_can)/launch/wibotic_connector_can.launch">
+      <param name="can_interface" value="$(optenv DINGO_WIBOTIC_CHARGER_CAN can0)" />
+      <param name="uavcan_node_id"  value="$(optenv DINGO_WIBOTIC_CHARGER_ID 10)" />
+    </include>
+  </group>
 </launch>

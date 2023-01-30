@@ -137,7 +137,7 @@ int main(int argc, char* argv[])
   socket_thread = boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
 
   std::string canbus_dev;
-  pnh.param<std::string>("canbus_dev", canbus_dev, "can0");
+  pnh.param<std::string>("canbus_dev", canbus_dev, "vcan0");
   puma_motor_driver::SocketCANGateway gateway(canbus_dev);
 
   bool dingo_omni = false;

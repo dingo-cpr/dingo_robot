@@ -33,7 +33,7 @@
 #ifndef DINGO_BASE_DINGO_LIGHTING_H
 #define DINGO_BASE_DINGO_LIGHTING_H
 
-#include<vector>
+#include <vector>
 
 #include "ros/ros.h"
 
@@ -42,11 +42,14 @@
 #include "dingo_msgs/Status.h"
 #include "sensor_msgs/BatteryState.h"
 #include "puma_motor_msgs/MultiStatus.h"
+#include "std_msgs/Bool.h"
 
 namespace dingo_base
 {
 
-typedef boost::array<uint32_t, 8> pattern;
+static constexpr uint8_t NUM_LEDS = 4;
+
+typedef std::array<uint32_t, NUM_LEDS> pattern;
 typedef std::vector<pattern> LightsPatterns;
 
 /** This class controls the 4 corner lights on Dingo. The lighting values
@@ -59,12 +62,24 @@ public:
   /** The set of states for which different lighting is provided */
   enum class State
   {
-    Idle = 0,
-    Driving,
-    LowBattery,
+    BatteryFault = 0,
+    ShoreFault,
+    PumaFault,
+    ShoreAndCharging,
+    ShorePower,
+    Charging,
+    Stopped,
     NeedsReset,
-    Fault,
-    Stopped
+    LowBattery,
+    Driving,
+    Idle
+  };
+
+  std::map<std::string, uint8_t> motor_to_led = {
+    {"front_left_wheel", dingo_msgs::Lights::LIGHTS_FRONT_LEFT},
+    {"front_right_wheel", dingo_msgs::Lights::LIGHTS_FRONT_RIGHT},
+    {"rear_left_wheel", dingo_msgs::Lights::LIGHTS_REAR_LEFT},
+    {"rear_right_wheel", dingo_msgs::Lights::LIGHTS_REAR_RIGHT}
   };
 
   /** Initialize ROS communication, set up timers, and initialize lighting
@@ -95,6 +110,9 @@ private:
   /** Used to subscribe to velocity commands */
   ros::Subscriber cmd_vel_sub_;
 
+  /** Used to subscribe to wibotic charging status */
+  ros::Subscriber wibotic_sub_;
+
   /** The last received Puma status message */
   puma_motor_msgs::MultiStatus pumas_status_msg_;
 
@@ -107,8 +125,14 @@ private:
   /** The last received velocity command */
   geometry_msgs::Twist cmd_vel_msg_;
 
+  /** The last received wibotic charging message */
+  std_msgs::Bool wibotic_charging_msg_;
+
   /** Used to trigger a periodic callback to update/publish state */
   ros::Timer pub_timer_;
+
+  /** Period of pub timer */
+  double pub_period_;
 
   /** Used to track if lighting state has been published recently */
   ros::Timer user_timeout_;
@@ -139,11 +163,16 @@ private:
   struct patterns
   {
     LightsPatterns stopped;
-    LightsPatterns fault;
+    LightsPatterns battery_fault;
+    LightsPatterns shore_power_fault;
+    LightsPatterns puma_fault;
     LightsPatterns reset;
     LightsPatterns low_battery;
     LightsPatterns driving;
     LightsPatterns idle;
+    LightsPatterns shore_power;
+    LightsPatterns manual_charging;
+    LightsPatterns shore_and_charging;
   }
   patterns_;
 
@@ -160,6 +189,7 @@ private:
   void setLights(dingo_msgs::Lights* lights, uint32_t pattern[4]);
 
   /** Updates the current lighting state based on all inputs */
+  void setState(DingoLighting::State new_state);
   void updateState();
 
   /** Updates the current lighting pattern based on the current state */
@@ -191,6 +221,11 @@ private:
    */
   void pumaStatusCallback(const puma_motor_msgs::MultiStatus::ConstPtr& status_msg);
 
+  /** Called when a Wibotic charging status message is received, for state updates.
+   *  @param[in] msg The status message to be stored
+   */
+  void wiboticChargingCallback(const std_msgs::Bool::ConstPtr& msg);
+
   /** Called periodically to update and publish the lighting pattern */
   void timerCallback(const ros::TimerEvent&);
 
@@ -198,6 +233,17 @@ private:
    *  lighting messages, indicating that state-based lighting should be used.
    */
   void userTimeoutCallback(const ros::TimerEvent&);
+
+  dingo_base::LightsPatterns solidPattern(dingo_base::pattern pattern);
+
+  dingo_base::LightsPatterns pulsePattern(dingo_base::pattern colour_l,
+                                          dingo_base::pattern colour_h,
+                                          double duration);
+
+  dingo_base::LightsPatterns blinkPattern(dingo_base::pattern first,
+                                          dingo_base::pattern second,
+                                          double duration,
+                                          double duty_cycle);
 };
 
 }  // namespace dingo_base
