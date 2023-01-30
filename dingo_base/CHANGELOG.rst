@@ -2,6 +2,26 @@
 Changelog for package dingo_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated reset and low battery lighting patterns
+* Added D150 battery levels
+* Added Wibotic charging status to dingo_lighting
+  Renamed PUMA can interface to vcan0
+  Added Wibotic launch to accessories.launch
+* Fixed pulse pattern to properly pulse between any two colours
+* Added shore and charging lighting pattern
+  Ignore puma bridge fault when EStopped
+  Map lights to motors for puma faults
+* Green pulse for charging
+* Updated how lighting state is determined
+  Improved pulsing logic
+* Split Fault into Shore, Puma, and Battery Fault
+  Added Pulsing lighting
+  Use std lib instead of boost
+* Added shore power lighting
+* Contributors: Roni Kreinin
+
 0.2.4 (2022-11-23)
 ------------------
 

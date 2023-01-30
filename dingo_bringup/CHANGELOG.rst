@@ -2,6 +2,15 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Added Wibotic charging status to dingo_lighting
+  Renamed PUMA can interface to vcan0
+  Added Wibotic launch to accessories.launch
+* [dingo_bringup] Switched flir_camera_driver to spinnaker_camera_driver as dep.
+* Microstrain uses microstrain.yaml instead of deprecated ROS launch arguments
+* Contributors: Joey Yang, Roni Kreinin, Tony Baltovski
+
 0.2.4 (2022-11-23)
 ------------------
 * Fixed point_cloud parameter
