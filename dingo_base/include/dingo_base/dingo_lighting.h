@@ -76,6 +76,8 @@ public:
   };
 
   std::map<std::string, uint8_t> motor_to_led = {
+    {"left_wheel", dingo_msgs::Lights::LIGHTS_FRONT_LEFT},
+    {"right_wheel", dingo_msgs::Lights::LIGHTS_FRONT_RIGHT},
     {"front_left_wheel", dingo_msgs::Lights::LIGHTS_FRONT_LEFT},
     {"front_right_wheel", dingo_msgs::Lights::LIGHTS_FRONT_RIGHT},
     {"rear_left_wheel", dingo_msgs::Lights::LIGHTS_REAR_LEFT},
