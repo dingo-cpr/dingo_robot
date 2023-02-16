@@ -94,8 +94,8 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
     - d455
     - l515
   -->
-  <arg name="initial_reset"     default="false"/>
-  <arg name="reconnect_timeout" default="6.0"/>
+  <arg name="realsense_initial_reset"     default="false"/>
+  <arg name="realsense_reconnect_timeout" default="6.0"/>
   <!-- Primary -->
   <arg name="realsense_enable"                        default="$(optenv DINGO_REALSENSE 0)"/>
   <arg name="realsense_serial"                        default="$(optenv DINGO_REALSENSE_SERIAL 0)"/> <!-- Serial No. -->
