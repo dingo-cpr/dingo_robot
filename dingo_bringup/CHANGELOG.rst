@@ -2,6 +2,13 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Adding Sick TIM551 lidar
+* Updated realsense initial_reset
+  Missing the prefix `realsense\_`
+* Contributors: Hilary Luo, luis-camero
+
 0.3.0 (2023-01-30)
 ------------------
 * Added Wibotic charging status to dingo_lighting
