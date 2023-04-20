@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.1 (2023-04-20)
+------------------
 * Adding Sick TIM551 lidar
 * Updated realsense initial_reset
   Missing the prefix `realsense\_`
