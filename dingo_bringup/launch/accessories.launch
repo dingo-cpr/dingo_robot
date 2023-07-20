@@ -151,7 +151,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <group if="$(arg realsense_enable)" ns="$(arg realsense_topic)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"             value="$(arg realsense_serial)"/>
-      <arg name="tf_prefix"             value="$(arg realsense_tf_prefix)"/>
+      <arg name="tf_prefix"             value="$(arg realsense_tf_prefix)_realsense"/>
       <arg name="initial_reset"         value="$(arg realsense_initial_reset)"/>
       <arg name="reconnect_timeout"     value="$(arg realsense_reconnect_timeout)"/>
       <!-- color -->
@@ -173,7 +173,7 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <group if="$(arg realsense_secondary_enable)" ns="$(arg realsense_secondary_topic)">
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="serial_no"             value="$(arg realsense_secondary_serial)"/>
-      <arg name="tf_prefix"             value="$(arg realsense_secondary_tf_prefix)"/>
+      <arg name="tf_prefix"             value="$(arg realsense_secondary_tf_prefix)_realsense"/>
       <arg name="initial_reset"         value="$(arg realsense_initial_reset)"/>
       <arg name="reconnect_timeout"     value="$(arg realsense_reconnect_timeout)"/>
       <!-- color -->
