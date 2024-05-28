@@ -2,6 +2,12 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updated Microstrain config
+* Updated realsense tf_prefix in nodelet launch to match urdf
+* Contributors: Hilary Luo, Luis Camero
+
 0.3.1 (2023-04-20)
 ------------------
 * Adding Sick TIM551 lidar
