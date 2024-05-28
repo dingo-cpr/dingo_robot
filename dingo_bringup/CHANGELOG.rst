@@ -2,8 +2,8 @@
 Changelog for package dingo_bringup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.3.2 (2024-05-28)
+------------------
 * Updated Microstrain config
 * Updated realsense tf_prefix in nodelet launch to match urdf
 * Contributors: Hilary Luo, Luis Camero
