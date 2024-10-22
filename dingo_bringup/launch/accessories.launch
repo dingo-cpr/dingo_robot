@@ -129,7 +129,8 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <arg name="realsense_color_frames"                  default="$(optenv DINGO_REALSENSE_COLOR_FRAMERATE 30)"/>
   <arg name="realsense_color_height"                  default="$(optenv DINGO_REALSENSE_COLOR_HEIGHT 480)"/>
   <arg name="realsense_color_width"                   default="$(optenv DINGO_REALSENSE_COLOR_WIDTH 640)"/>
-  <arg name="realsense_tf_prefix"                     default="$(optenv DINGO_REALSENSE_PREFIX camera)"/>
+  <arg name="realsense_mount"                         default="$(optenv DINGO_REALSENSE_MOUNT front)" />
+  <arg name="realsense_tf_prefix"                     default="$(eval optenv('DINGO_REALSENSE_PREFIX', arg('realsense_mount'))"/>
 
   <!-- Secondary -->
   <arg name="realsense_secondary_enable"              default="$(optenv DINGO_REALSENSE_SECONDARY 0)"/>
@@ -145,7 +146,8 @@ in the URDF. See dingo_description/urdf/accessories.urdf.xacro.
   <arg name="realsense_secondary_color_frames"        default="$(optenv DINGO_REALSENSE_SECONDARY_COLOR_FRAMERATE 30)"/>
   <arg name="realsense_secondary_color_height"        default="$(optenv DINGO_REALSENSE_SECONDARY_COLOR_HEIGHT 480)"/>
   <arg name="realsense_secondary_color_width"         default="$(optenv DINGO_REALSENSE_SECONDARY_COLOR_WIDTH 640)"/>
-  <arg name="realsense_secondary_tf_prefix"           default="$(optenv DINGO_REALSENSE_SECONDARY_PREFIX secondary_camera)"/>
+  <arg name="realsense_secondary_mount"               default="$(optenv DINGO_REALSENSE_SECONDARY_MOUNT rear)" />
+  <arg name="realsense_secondary_tf_prefix"           default="$(eval optenv('DINGO_REALSENSE_SECONDARY_PREFIX', arg('realsense_secondary_mount'))"/>
 
   <!-- Primary Launch -->
   <group if="$(arg realsense_enable)" ns="$(arg realsense_topic)">
